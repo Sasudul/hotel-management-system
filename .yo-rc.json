@@ -1,0 +1,32 @@
+{
+  "generator-jhipster": {
+    "applicationType": "monolith",
+    "authenticationType": "oauth2",
+    "baseName": "hotelManagementSystem",
+    "buildTool": "maven",
+    "cacheProvider": "no",
+    "clientFramework": "react",
+    "clientTestFrameworks": [],
+    "clientTheme": "none",
+    "creationTimestamp": 1787912193534,
+    "databaseType": "sql",
+    "defaultCommand": "app",
+    "devDatabaseType": "mysql",
+    "enableHibernateCache": null,
+    "enableTranslation": false,
+    "entities": [],
+    "feignClient": null,
+    "jhipsterVersion": "9.2.0",
+    "microfrontend": null,
+    "microfrontends": [],
+    "nativeLanguage": "en",
+    "packageName": "com.hms.myapp",
+    "prodDatabaseType": "mysql",
+    "reactive": false,
+    "serverPort": null,
+    "serviceDiscoveryType": null,
+    "syncUserWithIdp": true,
+    "testFrameworks": [],
+    "withAdminUi": true
+  }
+}
