@@ -3,6 +3,7 @@ package com.hms.myapp.service;
 import com.hms.myapp.domain.Booking;
 import com.hms.myapp.domain.Guest;
 import com.hms.myapp.domain.User;
+import com.hms.myapp.repository.GuestRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
@@ -20,14 +21,18 @@ public class BookingNotificationService {
     private final Logger log = LoggerFactory.getLogger(BookingNotificationService.class);
 
     private final JavaMailSender javaMailSender;
+    private final GuestRepository guestRepository;
 
-    public BookingNotificationService(JavaMailSender javaMailSender) {
+    public BookingNotificationService(JavaMailSender javaMailSender, GuestRepository guestRepository) {
         this.javaMailSender = javaMailSender;
+        this.guestRepository = guestRepository;
     }
 
     @Async
     public void sendBookingConfirmation(Booking booking) {
-        Guest guest = booking.getGuest();
+        if (booking.getGuest() == null || booking.getGuest().getId() == null) return;
+
+        Guest guest = guestRepository.findOneWithEagerRelationships(booking.getGuest().getId()).orElse(null);
         if (guest == null || guest.getUser() == null || guest.getUser().getEmail() == null) {
             log.warn("Cannot send email, guest or email is missing for booking {}", booking.getId());
             return;
@@ -57,7 +62,9 @@ public class BookingNotificationService {
 
     @Async
     public void sendBookingCancellation(Booking booking) {
-        Guest guest = booking.getGuest();
+        if (booking.getGuest() == null || booking.getGuest().getId() == null) return;
+
+        Guest guest = guestRepository.findOneWithEagerRelationships(booking.getGuest().getId()).orElse(null);
         if (guest == null || guest.getUser() == null || guest.getUser().getEmail() == null) {
             log.warn("Cannot send email, guest or email is missing for booking {}", booking.getId());
             return;
