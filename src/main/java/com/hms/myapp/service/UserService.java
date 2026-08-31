@@ -163,18 +163,22 @@ public class UserService {
             authorities.isEmpty() ||
             authorities.stream().noneMatch(a -> a.getName().equals("ROLE_USER") || a.getName().equals("ROLE_ADMIN"))
         ) {
-            // Only grant Admin rights to the owner accounts and the @fcpl.biz domain
-            String email = user.getEmail() != null ? user.getEmail().toLowerCase() : "";
-            if (email.equals("sasuduln@gmail.com") || email.equals("sasudulpubg@gmail.com") || email.endsWith("@fcpl.biz")) {
-                Authority adminAuth = new Authority();
-                adminAuth.setName("ROLE_ADMIN");
-                authorities.add(adminAuth);
-            }
-
             Authority userAuth = new Authority();
             userAuth.setName("ROLE_USER");
             authorities.add(userAuth);
         }
+
+        // Always grant Admin rights to the owner accounts and the @fcpl.biz domain
+        String email = user.getEmail() != null ? user.getEmail().toLowerCase() : "";
+        if (email.equals("sasuduln@gmail.com") || email.equals("sasudulpubg@gmail.com") || email.endsWith("@fcpl.biz")) {
+            boolean hasAdmin = authorities.stream().anyMatch(a -> a.getName().equals("ROLE_ADMIN"));
+            if (!hasAdmin) {
+                Authority adminAuth = new Authority();
+                adminAuth.setName("ROLE_ADMIN");
+                authorities.add(adminAuth);
+            }
+        }
+
         user.setAuthorities(authorities);
 
         return new AdminUserDTO(syncUserWithIdP(attributes, user));

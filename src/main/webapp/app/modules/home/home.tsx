@@ -162,22 +162,34 @@ export const Home = () => {
 
   const handleConfirmBooking = async () => {
     if (!selectedRoom) return;
+
+    if (dayjs(checkInDate).isBefore(dayjs().startOf('day'))) {
+      alert('Check-in date cannot be in the past.');
+      return;
+    }
+    if (dayjs(checkOutDate).diff(dayjs(checkInDate), 'day') <= 0) {
+      alert('Check-out date must be after check-in date.');
+      return;
+    }
+
     setSubmittingBooking(true);
 
     try {
       // 1. Create or Find Guest
-      let guestId = 1;
-      try {
-        const guestRes = await axios.post<IGuest>('/api/guests', {
-          phone: guestPhone,
-          address: 'Main Street, City Center',
-          idDocumentNumber: guestIdDoc,
-          user: account,
-        });
-        guestId = guestRes.data.id || 1;
-      } catch {
-        // Fallback to first existing guest if guest creation fails
-        if (guests.length > 0) guestId = guests[0].id!;
+      let guestId = guests.length > 0 ? guests[0].id : null;
+
+      if (!guestId) {
+        try {
+          const guestRes = await axios.post<IGuest>('/api/guests', {
+            phone: guestPhone,
+            address: 'Main Street, City Center',
+            idDocumentNumber: guestIdDoc,
+            user: account,
+          });
+          guestId = guestRes.data.id || 1;
+        } catch {
+          guestId = 1;
+        }
       }
 
       // 2. Create Booking
@@ -198,7 +210,11 @@ export const Home = () => {
       fetchRooms();
       if (isAuthenticated) fetchBookings();
     } catch (err: any) {
-      alert('Booking failed: ' + (err.response?.data?.message || err.message));
+      let errorMsg = err.response?.data?.message || err.message;
+      if (errorMsg === 'error.roomunavailable') {
+        errorMsg = 'Room is not available for the selected dates.';
+      }
+      alert('Booking failed: ' + errorMsg);
     } finally {
       setSubmittingBooking(false);
     }

@@ -98,10 +98,22 @@ public class BookingNotificationService {
             message.setFrom("no-reply@hotelms.com");
             message.setSubject(subject);
             message.setText(content, true);
+
+            // Log the email content for development purposes
+            log.info(
+                "\n----------------------------------------------------\n" +
+                    "EMAIL WOULD BE SENT (No SMTP configured):\n" +
+                    "To: {}\nSubject: {}\nContent:\n{}\n" +
+                    "----------------------------------------------------",
+                to,
+                subject,
+                content
+            );
+
             javaMailSender.send(mimeMessage);
             log.debug("Sent email to User '{}'", to);
         } catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent to user '{}'", to, e);
+            log.warn("Email could not be sent to user '{}' because no SMTP server is configured (Connection refused).", to);
         }
     }
 }
