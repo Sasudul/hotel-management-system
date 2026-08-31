@@ -1,0 +1,6 @@
+id;room_number;room_type;price_per_night;capacity;status;description;amenities
+1;101;SINGLE;99.00;1;AVAILABLE;Cozy single room perfect for solo travelers.;WiFi, TV, AC
+2;102;DOUBLE;149.00;2;AVAILABLE;Spacious double room with queen bed.;WiFi, TV, AC, Minibar
+3;201;TWIN;139.00;2;AVAILABLE;Comfortable twin room with two single beds.;WiFi, TV, AC
+4;301;SUITE;299.00;4;AVAILABLE;Luxury suite with city view and premium services.;WiFi, TV, AC, Minibar, Balcony, Spa bath
+5;302;DELUXE;199.00;3;AVAILABLE;Deluxe family room with beautiful interior.;WiFi, TV, AC, Minibar, Balcony

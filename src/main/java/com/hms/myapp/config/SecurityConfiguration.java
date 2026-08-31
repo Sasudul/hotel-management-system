@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Supplier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,8 +45,9 @@ public class SecurityConfiguration {
 
     private final JHipsterProperties jHipsterProperties;
 
-    @Value("${spring.security.oauth2.client.provider.oidc.issuer-uri}")
-    private String issuerUri;
+    // Hardcoded to avoid OIDC discovery at startup (which fails without internet).
+    // This must match the Google OIDC issuer.
+    private static final String ISSUER_URI = "https://accounts.google.com";
 
     public SecurityConfiguration(JHipsterProperties jHipsterProperties) {
         this.jHipsterProperties = jHipsterProperties;
@@ -84,6 +84,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/api/authenticate").permitAll()
                     .requestMatchers("/api/auth-info").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/rooms").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/rooms/available").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/rooms/{id}").permitAll()
                     .requestMatchers("/api/admin/**").hasAuthority(AuthoritiesConstants.ADMIN)
                     .requestMatchers("/api/**").authenticated()
                     .requestMatchers("/v3/api-docs/**").hasAuthority(AuthoritiesConstants.ADMIN)
@@ -118,7 +121,15 @@ public class SecurityConfiguration {
 
         return userRequest -> {
             OidcUser oidcUser = delegate.loadUser(userRequest);
-            return new DefaultOidcUser(oidcUser.getAuthorities(), oidcUser.getIdToken(), oidcUser.getUserInfo(), PREFERRED_USERNAME);
+            String userNameAttributeName = userRequest
+                .getClientRegistration()
+                .getProviderDetails()
+                .getUserInfoEndpoint()
+                .getUserNameAttributeName();
+            if (!StringUtils.hasText(userNameAttributeName)) {
+                userNameAttributeName = "sub";
+            }
+            return new DefaultOidcUser(oidcUser.getAuthorities(), oidcUser.getIdToken(), oidcUser.getUserInfo(), userNameAttributeName);
         };
     }
 
@@ -146,10 +157,13 @@ public class SecurityConfiguration {
 
     @Bean
     JwtDecoder jwtDecoder(ClientRegistrationRepository clientRegistrationRepository, RestTemplateBuilder restTemplateBuilder) {
-        NimbusJwtDecoder jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuerUri);
+        // Use the well-known Google JWK Set URI directly so the key fetch is lazy
+        // (only when the first JWT arrives), avoiding a startup timeout when the
+        // network is unavailable.
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri("https://www.googleapis.com/oauth2/v3/certs").build();
 
         OAuth2TokenValidator<Jwt> audienceValidator = new AudienceValidator(jHipsterProperties.getSecurity().getOauth2().getAudience());
-        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(ISSUER_URI);
         OAuth2TokenValidator<Jwt> withAudience = new DelegatingOAuth2TokenValidator<>(withIssuer, audienceValidator);
 
         jwtDecoder.setJwtValidator(withAudience);

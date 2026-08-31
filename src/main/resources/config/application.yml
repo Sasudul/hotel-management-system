@@ -94,7 +94,7 @@ spring:
     name: hotelManagementSystem
   docker:
     compose:
-      enabled: true
+      enabled: false
       lifecycle-management: start-only
       file: src/main/docker/services.yml
   profiles:
@@ -146,9 +146,22 @@ spring:
   security:
     oauth2:
       client:
+        provider:
+          oidc:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+            user-name-attribute: sub
         registration:
           oidc:
-            scope: openid, profile
+            provider: oidc
+            client-id: 270545467897-jp927ioe6d37npjc4che4u809g6jf1da.apps.googleusercontent.com
+            client-secret: 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
+            authorization-grant-type: authorization_code
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
+            scope: openid, profile, email
+            client-name: Google
   task:
     execution:
       thread-name-prefix: hotel-management-system-task-
@@ -212,7 +225,7 @@ jhipster:
     license: unlicensed
     license-url:
   security:
-    content-security-policy: "default-src 'self'; frame-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
+    content-security-policy: "default-src 'self'; frame-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:"
     oauth2:
       audience:
         - account

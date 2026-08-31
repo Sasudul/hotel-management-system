@@ -1,0 +1,595 @@
+/* ==========================================================================
+   SasaBooking.com Design System Tokens & Global Theme Styles
+   ========================================================================== */
+
+:root {
+  /* Color Palette */
+  --booking-navy: #003b95;
+  --booking-navy-dark: #00224f;
+  --booking-blue: #006ce4;
+  --booking-blue-hover: #0056b3;
+  --booking-yellow: #ffb700;
+  --booking-yellow-dark: #e0a200;
+  --booking-white: #ffffff;
+  --booking-canvas: #1a1a1a;
+  --booking-body: #595959;
+  --booking-surface-alt: #f5f5f5;
+  --booking-hairline: #e7e7e7;
+  --booking-link: #0000ee;
+  --booking-green: #008009;
+  --booking-green-bg: #e6f4e8;
+
+  /* Typography Stack */
+  --booking-font: BlinkMacSystemFont, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Shadows & Elevation */
+  --booking-shadow-sm: rgba(26, 26, 26, 0.16) 0px 2px 8px 0px;
+  --booking-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+body {
+  font-family: var(--booking-font);
+  background-color: var(--booking-surface-alt);
+  color: var(--booking-canvas);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Base Link & Button Focus Outline */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #000000 !important;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Header & Navbar Components
+   ========================================================================== */
+
+.booking-header-wrapper {
+  background-color: var(--booking-navy);
+  color: var(--booking-white);
+  width: 100%;
+}
+
+.booking-top-bar {
+  max-width: 1108px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.booking-logo {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--booking-white);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    color: var(--booking-white);
+    text-decoration: none;
+  }
+}
+
+.booking-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .currency-btn,
+  .help-btn {
+    background: transparent;
+    border: none;
+    color: var(--booking-white);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .list-property-btn {
+    background: transparent;
+    border: 1px solid var(--booking-white);
+    color: var(--booking-white);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    cursor: pointer;
+    text-decoration: none;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .signin-btn {
+    background-color: var(--booking-white);
+    color: var(--booking-blue);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid var(--booking-white);
+    cursor: pointer;
+    text-decoration: none;
+
+    &:hover {
+      background-color: #f0f4fa;
+      color: var(--booking-navy);
+    }
+  }
+}
+
+.booking-subnav-bar {
+  max-width: 1108px;
+  margin: 0 auto;
+  padding: 0 16px 12px 16px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.booking-subnav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  color: var(--booking-white);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--booking-white);
+  }
+
+  &.active {
+    border-color: var(--booking-white);
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* ==========================================================================
+   Hero Section & Signature Search Bar Widget
+   ========================================================================== */
+
+.booking-hero-section {
+  background-color: var(--booking-navy);
+  color: var(--booking-white);
+  padding: 24px 16px 48px 16px;
+
+  .hero-container {
+    max-width: 1108px;
+    margin: 0 auto;
+  }
+
+  .hero-title {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+    font-weight: 400;
+    margin-bottom: 24px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* SasaBooking.com Iconic Golden Search Box */
+.booking-search-widget-wrapper {
+  background-color: var(--booking-yellow);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: var(--booking-shadow-sm);
+}
+
+.booking-search-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr 1fr;
+  gap: 4px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.search-field-box {
+  background-color: var(--booking-white);
+  border-radius: 4px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--booking-canvas);
+
+  .field-icon {
+    color: var(--booking-body);
+    font-size: 18px;
+  }
+
+  .field-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--booking-body);
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input,
+    select {
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--booking-canvas);
+      background: transparent;
+      padding: 0;
+      width: 100%;
+    }
+  }
+}
+
+.booking-search-btn {
+  background-color: var(--booking-blue);
+  color: var(--booking-white);
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--booking-blue-hover);
+  }
+}
+
+/* ==========================================================================
+   Main Content Layout & Filter Sidebar
+   ========================================================================== */
+
+.booking-main-container {
+  max-width: 1108px;
+  margin: 32px auto;
+  padding: 0 16px;
+}
+
+.booking-deals-banner {
+  background: white;
+  border: 1px solid #d6d8da;
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  .genius-badge {
+    background-color: var(--booking-blue);
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 8px;
+  }
+}
+
+/* Room Card Component */
+.booking-room-card {
+  background-color: var(--booking-white);
+  border: 1px solid var(--booking-hairline);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 240px 1fr 200px;
+  gap: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: var(--booking-shadow-sm);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.room-card-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 6px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .room-tag {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+}
+
+.room-card-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  .room-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--booking-blue);
+    margin: 0 0 6px 0;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--booking-navy);
+      text-decoration: underline;
+    }
+  }
+
+  .room-subtext {
+    font-size: 12px;
+    color: var(--booking-body);
+    margin-bottom: 8px;
+  }
+
+  .amenities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+
+    .amenity-chip {
+      background-color: var(--booking-surface-alt);
+      color: var(--booking-canvas);
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+  }
+
+  .room-features {
+    font-size: 13px;
+    color: var(--booking-green);
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+.room-card-pricing {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  text-align: right;
+  border-left: 1px solid var(--booking-hairline);
+  padding-left: 16px;
+
+  @media (max-width: 768px) {
+    border-left: none;
+    padding-left: 0;
+    align-items: flex-start;
+    text-align: left;
+    margin-top: 12px;
+  }
+
+  .rating-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .rating-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--booking-navy);
+    }
+
+    .rating-box {
+      background-color: var(--booking-navy);
+      color: var(--booking-white);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 6px 6px 6px 0;
+    }
+  }
+
+  .price-amount {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--booking-canvas);
+    margin: 8px 0 2px 0;
+  }
+
+  .price-subtext {
+    font-size: 11px;
+    color: var(--booking-body);
+    margin-bottom: 12px;
+  }
+
+  .reserve-btn {
+    background-color: var(--booking-blue);
+    color: var(--booking-white);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: var(--booking-blue-hover);
+    }
+  }
+}
+
+/* ==========================================================================
+   Booking Modal & Form
+   ========================================================================== */
+
+.booking-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.booking-modal-card {
+  background-color: var(--booking-white);
+  border-radius: 8px;
+  max-width: 650px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--booking-shadow-lg);
+}
+
+.modal-header-banner {
+  background-color: var(--booking-navy);
+  color: var(--booking-white);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .close-modal-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+  }
+}
+
+.modal-body-content {
+  padding: 24px;
+}
+
+/* ==========================================================================
+   Footer Component
+   ========================================================================== */
+
+.booking-footer {
+  background-color: var(--booking-surface-alt);
+  border-top: 1px solid var(--booking-hairline);
+  padding: 48px 16px 32px 16px;
+  color: var(--booking-body);
+  font-size: 13px;
+
+  .footer-inner {
+    max-width: 1108px;
+    margin: 0 auto;
+  }
+
+  .footer-cols {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .footer-col {
+    h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--booking-canvas);
+      margin-bottom: 12px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        margin-bottom: 8px;
+
+        a {
+          color: var(--booking-blue);
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+      }
+    }
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--booking-hairline);
+    padding-top: 20px;
+    text-align: center;
+    font-size: 12px;
+  }
+}

@@ -1,8 +1,8 @@
 const webpackMerge = require('webpack-merge').merge;
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin');
-const WebpackNotifierPlugin = require('webpack-notifier');
-const path = require('node:path');
+// const WebpackNotifierPlugin = require('webpack-notifier');
+// const path = require('node:path');
 
 const sass = require('sass');
 
@@ -97,9 +97,9 @@ module.exports = async options =>
           reload: false,
         },
       ),
-      new WebpackNotifierPlugin({
-        title: 'Hotel Management System',
-        contentImage: path.join(__dirname, 'logo-jhipster.png'),
-      }),
+      // new WebpackNotifierPlugin({
+      //   title: 'Hotel Management System',
+      //   contentImage: path.join(__dirname, 'logo-jhipster.png'),
+      // }),
     ].filter(Boolean),
   });

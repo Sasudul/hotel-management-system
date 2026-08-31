@@ -1,0 +1,55 @@
+{
+  "annotations": {
+    "changelogDate": "20260828104146"
+  },
+  "applications": ["*"],
+  "dto": "mapstruct",
+  "fields": [
+    {
+      "fieldName": "roomNumber",
+      "fieldType": "String",
+      "fieldValidateRules": ["required", "unique"]
+    },
+    {
+      "fieldName": "roomType",
+      "fieldType": "RoomType",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "SINGLE,DOUBLE,TWIN,SUITE,DELUXE"
+    },
+    {
+      "fieldName": "pricePerNight",
+      "fieldType": "BigDecimal",
+      "fieldValidateRules": ["required", "min"],
+      "fieldValidateRulesMin": "0"
+    },
+    {
+      "fieldName": "capacity",
+      "fieldType": "Integer",
+      "fieldValidateRules": ["required", "min"],
+      "fieldValidateRulesMin": "1"
+    },
+    {
+      "fieldName": "status",
+      "fieldType": "RoomStatus",
+      "fieldValidateRules": ["required"],
+      "fieldValues": "AVAILABLE,OCCUPIED,MAINTENANCE,OUT_OF_SERVICE"
+    },
+    {
+      "fieldName": "description",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "1000"
+    },
+    {
+      "fieldName": "amenities",
+      "fieldType": "String",
+      "fieldValidateRules": ["maxlength"],
+      "fieldValidateRulesMaxlength": "500"
+    }
+  ],
+  "name": "Room",
+  "pagination": "pagination",
+  "relationships": [],
+  "searchEngine": "no",
+  "service": "serviceImpl"
+}

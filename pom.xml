@@ -74,6 +74,11 @@
             <version>${jhipster-framework.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <scope>provided</scope>
@@ -841,7 +846,7 @@
             </activation>
             <properties>
                 <!-- default Spring profiles -->
-                <liquibase-plugin.password/>
+                <liquibase-plugin.password>Cool2006#</liquibase-plugin.password>
                 <liquibase-plugin.url>jdbc:mysql://localhost:3306/hotelManagementSystem</liquibase-plugin.url>
                 <liquibase-plugin.username>root</liquibase-plugin.username>
                 <profile.test>test,testdev</profile.test>
@@ -858,7 +863,7 @@
         <profile>
             <id>docker-compose</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>

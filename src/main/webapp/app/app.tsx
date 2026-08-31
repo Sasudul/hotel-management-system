@@ -1,11 +1,10 @@
 import 'react-toastify/dist/ReactToastify.css';
 import './app.scss';
+import './booking-theme.scss';
 import 'app/config/dayjs';
 
 import React, { useEffect } from 'react';
-import { Card } from 'react-bootstrap';
 import { BrowserRouter } from 'react-router';
-
 import { ToastContainer } from 'react-toastify';
 
 import { useAppDispatch, useAppSelector } from 'app/config/store';
@@ -34,11 +33,10 @@ export const App = () => {
   const isInProduction = useAppSelector(state => state.applicationProfile.inProduction);
   const isOpenAPIEnabled = useAppSelector(state => state.applicationProfile.isOpenAPIEnabled);
 
-  const paddingTop = '60px';
   return (
     <BrowserRouter basename={baseHref}>
-      <div className="app-container" style={{ paddingTop }}>
-        <ToastContainer position="top-left" className="toastify-container" toastClassName="toastify-toast" />
+      <div className="app-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <ToastContainer position="top-right" className="toastify-container" toastClassName="toastify-toast" />
         <ErrorBoundary>
           <Header
             isAuthenticated={isAuthenticated}
@@ -48,14 +46,12 @@ export const App = () => {
             isOpenAPIEnabled={isOpenAPIEnabled}
           />
         </ErrorBoundary>
-        <div className="container-fluid view-container" id="app-view-container">
-          <Card className="jh-card">
-            <ErrorBoundary>
-              <AppRoutes />
-            </ErrorBoundary>
-          </Card>
-          <Footer />
-        </div>
+        <main className="flex-grow-1" id="app-view-container">
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
+        </main>
+        <Footer />
       </div>
     </BrowserRouter>
   );

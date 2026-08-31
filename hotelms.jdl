@@ -1,0 +1,69 @@
+entity Room {
+  roomNumber String required unique
+  roomType RoomType required
+  pricePerNight BigDecimal required min(0)
+  capacity Integer required min(1)
+  status RoomStatus required
+  description String maxlength(1000)
+  amenities String maxlength(500)
+}
+ 
+enum RoomType {
+  SINGLE, DOUBLE, TWIN, SUITE, DELUXE
+}
+ 
+enum RoomStatus {
+  AVAILABLE, OCCUPIED, MAINTENANCE, OUT_OF_SERVICE
+}
+ 
+entity Guest {
+  phone String required pattern(/^[0-9+\-\s]{7,20}$/)
+  address String maxlength(500)
+  idDocumentNumber String required
+}
+ 
+entity Booking {
+  checkInDate LocalDate required
+  checkOutDate LocalDate required
+  status BookingStatus required
+  totalAmount BigDecimal required min(0)
+  numberOfGuests Integer required min(1)
+  specialRequests String maxlength(1000)
+  createdDate Instant required
+  cancelledReason String maxlength(500)
+}
+ 
+enum BookingStatus {
+  PENDING, CONFIRMED, CHECKED_IN, CHECKED_OUT, CANCELLED
+}
+ 
+entity Payment {
+  amount BigDecimal required min(0)
+  method PaymentMethod required
+  status PaymentStatus required
+  paidDate Instant
+  notes String maxlength(500)
+}
+ 
+enum PaymentMethod {
+  CASH, CARD_AT_HOTEL
+}
+ 
+enum PaymentStatus {
+  PENDING, PAID, REFUNDED
+}
+ 
+relationship OneToOne {
+  Guest{user(login) required} to User with builtInEntity
+}
+ 
+relationship ManyToOne {
+  Booking{guest(idDocumentNumber) required} to Guest
+  Booking{room(roomNumber) required} to Room
+  Payment{booking(id) required} to Booking
+  Payment{recordedBy(login)} to User with builtInEntity
+}
+ 
+paginate Room, Booking, Payment with pagination
+service Room, Guest, Booking, Payment with serviceImpl
+dto Room, Guest, Booking, Payment with mapstruct

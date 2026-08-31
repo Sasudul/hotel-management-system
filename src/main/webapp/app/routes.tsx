@@ -9,6 +9,7 @@ import PrivateRoute from 'app/shared/auth/private-route';
 import ErrorBoundaryRoutes from 'app/shared/error/error-boundary-routes';
 import PageNotFound from 'app/shared/error/page-not-found';
 import { Authority } from 'app/shared/jhipster/constants';
+import Profile from 'app/modules/account/profile/profile';
 
 const loading = <div>loading ...</div>;
 
@@ -20,6 +21,14 @@ const AppRoutes = () => {
         <ErrorBoundaryRoutes>
           <Route index element={<Home />} />
           <Route path="logout" element={<Logout />} />
+          <Route
+            path="profile"
+            element={
+              <PrivateRoute hasAnyAuthorities={[Authority.USER]}>
+                <Profile />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="admin/*"
             element={
