@@ -69,7 +69,7 @@ const Header = (props: IHeaderProps) => {
                 <Link to="/profile" className="text-white text-decoration-none me-3 mt-2">
                   Profile
                 </Link>
-                {props.isAuthenticated && <EntitiesMenu />}
+                {props.isAdmin && <EntitiesMenu />}
                 {props.isAdmin && <AdminMenu showOpenAPI={props.isOpenAPIEnabled} />}
               </Nav>
               <Link to="/logout" className="signin-btn text-decoration-none">

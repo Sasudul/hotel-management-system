@@ -82,6 +82,8 @@ public class SecurityConfiguration {
                     .requestMatchers("/i18n/**").permitAll()
                     .requestMatchers("/content/**").permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
+                    .requestMatchers("/api/guests/**").permitAll()
+                    .requestMatchers("/api/bookings/**").permitAll()
                     .requestMatchers("/api/authenticate").permitAll()
                     .requestMatchers("/api/auth-info").permitAll()
                     .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/rooms").permitAll()

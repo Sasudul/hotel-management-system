@@ -60,6 +60,20 @@ public class GuestResource {
         if (guestDTO.getId() != null) {
             throw new BadRequestAlertException("A new guest cannot already have an ID", ENTITY_NAME, "idexists");
         }
+
+        if (guestDTO.getUser() == null) {
+            String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
+                new BadRequestAlertException("Current user login not found", ENTITY_NAME, "notloggedin")
+            );
+            User user = userService
+                .getUserWithAuthoritiesByLogin(userLogin)
+                .orElseThrow(() -> new BadRequestAlertException("User not found", ENTITY_NAME, "usernotfound"));
+            com.hms.myapp.service.dto.UserDTO userDTO = new com.hms.myapp.service.dto.UserDTO();
+            userDTO.setId(user.getId());
+            userDTO.setLogin(user.getLogin());
+            guestDTO.setUser(userDTO);
+        }
+
         guestDTO = guestService.save(guestDTO);
         return ResponseEntity.created(new URI("/api/guests/" + guestDTO.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(applicationName, false, ENTITY_NAME, guestDTO.getId().toString()))

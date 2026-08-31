@@ -38,6 +38,7 @@ const DEFAULT_ROOM_IMAGE = 'https://images.unsplash.com/photo-1618773928121-c322
 
 export const Home = () => {
   const isAuthenticated = useAppSelector(state => state.authentication.isAuthenticated);
+  const account = useAppSelector(state => state.authentication.account);
 
   // Search & Filter State
   const [selectedType, setSelectedType] = useState<string>('ALL');
@@ -171,6 +172,7 @@ export const Home = () => {
           phone: guestPhone,
           address: 'Main Street, City Center',
           idDocumentNumber: guestIdDoc,
+          user: account,
         });
         guestId = guestRes.data.id || 1;
       } catch {
@@ -187,6 +189,8 @@ export const Home = () => {
         specialRequests: specialRequests || 'Pay at hotel booking',
         room: { id: selectedRoom.id },
         guest: { id: guestId },
+        totalAmount: calculateTotalPrice(selectedRoom.pricePerNight),
+        createdDate: dayjs().toISOString(),
       };
 
       const res = await axios.post<IBooking>('/api/bookings', bookingPayload);

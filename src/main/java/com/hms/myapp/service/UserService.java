@@ -147,18 +147,35 @@ public class UserService {
             throw new IllegalArgumentException("AuthenticationToken is not OAuth2 or JWT!");
         }
         User user = getUser(attributes);
-        user.setAuthorities(
-            authToken
-                .getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .map(authority -> {
-                    Authority auth = new Authority();
-                    auth.setName(authority);
-                    return auth;
-                })
-                .collect(Collectors.toSet())
-        );
+        Set<Authority> authorities = authToken
+            .getAuthorities()
+            .stream()
+            .map(GrantedAuthority::getAuthority)
+            .map(authority -> {
+                Authority auth = new Authority();
+                auth.setName(authority);
+                return auth;
+            })
+            .collect(Collectors.toSet());
+
+        // Ensure standard role is assigned if IdP didn't send roles
+        if (
+            authorities.isEmpty() ||
+            authorities.stream().noneMatch(a -> a.getName().equals("ROLE_USER") || a.getName().equals("ROLE_ADMIN"))
+        ) {
+            // Only grant Admin rights to the owner accounts and the @fcpl.biz domain
+            String email = user.getEmail() != null ? user.getEmail().toLowerCase() : "";
+            if (email.equals("sasuduln@gmail.com") || email.equals("sasudulpubg@gmail.com") || email.endsWith("@fcpl.biz")) {
+                Authority adminAuth = new Authority();
+                adminAuth.setName("ROLE_ADMIN");
+                authorities.add(adminAuth);
+            }
+
+            Authority userAuth = new Authority();
+            userAuth.setName("ROLE_USER");
+            authorities.add(userAuth);
+        }
+        user.setAuthorities(authorities);
 
         return new AdminUserDTO(syncUserWithIdP(attributes, user));
     }
@@ -180,6 +197,8 @@ public class UserService {
         }
         if (username != null) {
             user.setLogin(username);
+        } else if (details.get("email") != null) {
+            user.setLogin(((String) details.get("email")).toLowerCase());
         } else if (user.getLogin() == null) {
             user.setLogin(user.getId());
         }

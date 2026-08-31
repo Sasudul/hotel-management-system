@@ -7,7 +7,7 @@ export const Profile = () => {
   const [profile, setProfile] = useState<any>({
     phone: '',
     address: '',
-    idCardNumber: '',
+    idDocumentNumber: '',
   });
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export const Profile = () => {
         setProfile({
           phone: response.data.phone || '',
           address: response.data.address || '',
-          idCardNumber: response.data.idCardNumber || '',
+          idDocumentNumber: response.data.idDocumentNumber || '',
         });
       }
     } catch (error: any) {
@@ -76,12 +76,12 @@ export const Profile = () => {
               />
             </FormGroup>
             <FormGroup className="mb-3">
-              <FormLabel htmlFor="idCardNumber">ID Card / Passport Number</FormLabel>
+              <FormLabel htmlFor="idDocumentNumber">ID Card / Passport Number</FormLabel>
               <FormControl
                 type="text"
-                name="idCardNumber"
-                id="idCardNumber"
-                value={profile.idCardNumber}
+                name="idDocumentNumber"
+                id="idDocumentNumber"
+                value={profile.idDocumentNumber}
                 onChange={handleChange}
                 placeholder="Enter ID / Passport Number"
               />
