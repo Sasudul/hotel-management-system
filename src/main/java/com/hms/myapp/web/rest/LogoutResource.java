@@ -39,18 +39,31 @@ public class LogoutResource {
         @CurrentSecurityContext(expression = "authentication") OAuth2AuthenticationToken oAuth2AuthenticationToken,
         @AuthenticationPrincipal OidcUser oidcUser
     ) {
+        if (oAuth2AuthenticationToken == null || oidcUser == null) {
+            request.getSession().invalidate();
+            return ResponseEntity.ok().body(Map.of("logoutUrl", "/"));
+        }
+
         StringBuilder logoutUrl = new StringBuilder();
         String originUrl = request.getHeader(HttpHeaders.ORIGIN);
 
         ClientRegistration clientRegistration = registrationRepository.findByRegistrationId(
             oAuth2AuthenticationToken.getAuthorizedClientRegistrationId()
         );
-        logoutUrl
-            .append(clientRegistration.getProviderDetails().getConfigurationMetadata().get("end_session_endpoint").toString())
-            .append("?id_token_hint=")
-            .append(oidcUser.getIdToken().getTokenValue())
-            .append("&post_logout_redirect_uri=")
-            .append(originUrl);
+
+        Object endSessionEndpoint = clientRegistration.getProviderDetails().getConfigurationMetadata().get("end_session_endpoint");
+
+        if (endSessionEndpoint != null) {
+            logoutUrl
+                .append(endSessionEndpoint.toString())
+                .append("?id_token_hint=")
+                .append(oidcUser.getIdToken().getTokenValue())
+                .append("&post_logout_redirect_uri=")
+                .append(originUrl);
+        } else {
+            // Fallback if the provider doesn't supply an end_session_endpoint
+            logoutUrl.append(originUrl != null ? originUrl : "/");
+        }
 
         request.getSession().invalidate();
         return ResponseEntity.ok().body(Map.of("logoutUrl", logoutUrl.toString()));

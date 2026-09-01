@@ -4,6 +4,7 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import DatePicker from 'react-datepicker';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBed,
@@ -29,6 +30,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import { useAppSelector } from 'app/config/store';
+import { getLoginUrl } from 'app/shared/util/url-utils';
 import { IRoom } from 'app/shared/model/room.model';
 import { IBooking } from 'app/shared/model/booking.model';
 import { IGuest } from 'app/shared/model/guest.model';
@@ -47,17 +49,22 @@ export const Home = () => {
 
   // Search & Filter State
   const [selectedType, setSelectedType] = useState<string>('ALL');
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([dayjs().toDate(), dayjs().add(3, 'day').toDate()]);
-  const [startDate, endDate] = dateRange;
+  const [startDate, setStartDate] = useState<Date | null>(dayjs().toDate());
+  const [endDate, setEndDate] = useState<Date | null>(dayjs().add(3, 'day').toDate());
   const [guestCount, setGuestCount] = useState<number>(2);
   const [maxPrice, setMaxPrice] = useState<number>(100000);
 
   // Data State
   const [rooms, setRooms] = useState<IRoom[]>([]);
+  const [availableRoomIds, setAvailableRoomIds] = useState<Set<number>>(new Set());
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [guests, setGuests] = useState<IGuest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'guest' | 'staff'>('guest');
+
+  // Auth Modal State
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   // Booking Modal State
   const [selectedRoom, setSelectedRoom] = useState<IRoom | null>(null);
@@ -93,9 +100,20 @@ export const Home = () => {
     return [];
   };
 
+  const fetchAllRooms = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get<IRoom[]>('/api/rooms?size=1000');
+      setRooms(extractArray(res.data));
+    } catch (err) {
+      console.error('Error fetching all rooms:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchAvailableRooms = async () => {
     if (!startDate || !endDate) return;
-    setLoading(true);
     try {
       const res = await axios.get<IRoom[]>('/api/rooms/available', {
         params: {
@@ -103,14 +121,17 @@ export const Home = () => {
           checkOut: dayjs(endDate).format('YYYY-MM-DD'),
         },
       });
-      setRooms(extractArray(res.data));
+      const avail = extractArray(res.data);
+      setAvailableRoomIds(new Set(avail.map(r => r.id)));
     } catch (err) {
       console.error('Error fetching available rooms:', err);
-      setRooms([]);
-    } finally {
-      setLoading(false);
+      setAvailableRoomIds(new Set());
     }
   };
+
+  useEffect(() => {
+    fetchAllRooms();
+  }, []);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -119,6 +140,7 @@ export const Home = () => {
   }, [startDate, endDate]);
 
   const fetchRooms = () => {
+    fetchAllRooms();
     fetchAvailableRooms();
   };
 
@@ -147,7 +169,19 @@ export const Home = () => {
     fetchAvailableRooms();
   };
 
-  const handleOpenReserveModal = (room: IRoom) => {
+  const handleOpenReserveModal = (room: IRoom, isAvailable: boolean) => {
+    if (!startDate || !endDate) {
+      toast.error('Please select both Check-in and Check-out dates first.');
+      return;
+    }
+    if (!isAvailable) {
+      toast.error('This room is not available for the selected dates.');
+      return;
+    }
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     setSelectedRoom(room);
     setCompletedBooking(null);
     setShowBookingModal(true);
@@ -330,20 +364,45 @@ export const Home = () => {
               </div>
 
               {/* Dates Selector */}
-              <div className="search-field-box" style={{ minWidth: '300px' }}>
+              <div className="search-field-box" style={{ minWidth: '350px' }}>
                 <FontAwesomeIcon icon={faCalendarAlt} className="field-icon" />
-                <div className="field-content w-100">
-                  <label>Check-in — Check-out</label>
-                  <DatePicker
-                    selectsRange={true}
-                    startDate={startDate || undefined}
-                    endDate={endDate || undefined}
-                    onChange={(update: [Date | null, Date | null]) => setDateRange(update)}
-                    minDate={new Date()}
-                    className="form-control border-0 p-0 shadow-none bg-transparent w-100 fw-bold"
-                    placeholderText="Select dates"
-                    dateFormat="MM/dd/yyyy"
-                  />
+                <div className="d-flex align-items-center w-100 gap-2">
+                  <div className="field-content flex-grow-1">
+                    <label>Check-in</label>
+                    <DatePicker
+                      selected={startDate}
+                      onChange={date => {
+                        setStartDate(date);
+                        if (date && endDate && !dayjs(date).isBefore(dayjs(endDate), 'day')) {
+                          setEndDate(dayjs(date).add(1, 'day').toDate());
+                        }
+                      }}
+                      selectsStart
+                      startDate={startDate}
+                      endDate={endDate}
+                      minDate={new Date()}
+                      className="form-control border-0 p-0 shadow-none bg-transparent w-100 fw-bold"
+                      wrapperClassName="w-100"
+                      placeholderText="Select Check-in"
+                      dateFormat="MMM d, yyyy"
+                    />
+                  </div>
+                  <div className="text-muted fw-bold px-2">—</div>
+                  <div className="field-content flex-grow-1">
+                    <label>Check-out</label>
+                    <DatePicker
+                      selected={endDate}
+                      onChange={date => setEndDate(date)}
+                      selectsEnd
+                      startDate={startDate}
+                      endDate={endDate}
+                      minDate={startDate ? dayjs(startDate).add(1, 'day').toDate() : dayjs().add(1, 'day').toDate()}
+                      className="form-control border-0 p-0 shadow-none bg-transparent w-100 fw-bold"
+                      wrapperClassName="w-100"
+                      placeholderText="Select Check-out"
+                      dateFormat="MMM d, yyyy"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -437,12 +496,12 @@ export const Home = () => {
                 {loading ? (
                   <div className="text-center py-5 bg-white rounded border">
                     <div className="spinner-border text-primary" role="status" />
-                    <p className="mt-2 text-muted">Searching real-time availability...</p>
+                    <p className="mt-2 text-muted">Loading rooms...</p>
                   </div>
                 ) : filteredRooms.length === 0 ? (
                   <Alert variant="info" className="text-center py-4">
-                    <h5>No available rooms match your criteria</h5>
-                    <p className="mb-0">Try adjusting your check-in dates or room type filter.</p>
+                    <h5>No rooms match your criteria</h5>
+                    <p className="mb-0">Try adjusting your filters.</p>
                   </Alert>
                 ) : (
                   filteredRooms.map(room => {
@@ -516,9 +575,19 @@ export const Home = () => {
                               Includes taxes & fees
                             </div>
 
-                            <button className="reserve-btn" onClick={() => handleOpenReserveModal(room)}>
-                              Reserve Room
-                            </button>
+                            {room.id && availableRoomIds.has(room.id) ? (
+                              <button className="reserve-btn" onClick={() => handleOpenReserveModal(room, true)}>
+                                Reserve Room
+                              </button>
+                            ) : (
+                              <button
+                                className="reserve-btn disabled"
+                                disabled
+                                style={{ backgroundColor: '#6c757d', cursor: 'not-allowed' }}
+                              >
+                                Not Available
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -885,6 +954,31 @@ export const Home = () => {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+      {/* Authentication Requirement Modal */}
+      <Modal show={showAuthModal} onHide={() => setShowAuthModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title className="text-primary fw-bold">Login Required</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center py-4">
+          <FontAwesomeIcon icon={faUser} className="text-primary mb-3" style={{ fontSize: '3rem' }} />
+          <h5>You must be logged in to book a room.</h5>
+          <p className="text-muted">Would you like to log in now to continue with your reservation?</p>
+        </Modal.Body>
+        <Modal.Footer className="justify-content-center">
+          <Button variant="outline-secondary" onClick={() => setShowAuthModal(false)}>
+            Continue Browsing
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setShowAuthModal(false);
+              navigate(getLoginUrl(), { state: { from: { pathname: '/' } } });
+            }}
+          >
+            Proceed to Login
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

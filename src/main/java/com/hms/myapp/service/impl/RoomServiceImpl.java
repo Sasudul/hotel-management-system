@@ -2,6 +2,7 @@ package com.hms.myapp.service.impl;
 
 import com.hms.myapp.domain.Room;
 import com.hms.myapp.repository.RoomRepository;
+import com.hms.myapp.service.AuditLogService;
 import com.hms.myapp.service.RoomService;
 import com.hms.myapp.service.dto.RoomDTO;
 import com.hms.myapp.service.mapper.RoomMapper;
@@ -26,9 +27,12 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomMapper roomMapper;
 
-    public RoomServiceImpl(RoomRepository roomRepository, RoomMapper roomMapper) {
+    private final AuditLogService auditLogService;
+
+    public RoomServiceImpl(RoomRepository roomRepository, RoomMapper roomMapper, AuditLogService auditLogService) {
         this.roomRepository = roomRepository;
         this.roomMapper = roomMapper;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -36,6 +40,10 @@ public class RoomServiceImpl implements RoomService {
         LOG.debug("Request to save Room : {}", roomDTO);
         Room room = roomMapper.toEntity(roomDTO);
         room = roomRepository.save(room);
+
+        // Log the room creation
+        auditLogService.logAction("Room", room.getId(), "CREATE");
+
         return roomMapper.toDto(room);
     }
 
@@ -44,6 +52,10 @@ public class RoomServiceImpl implements RoomService {
         LOG.debug("Request to update Room : {}", roomDTO);
         Room room = roomMapper.toEntity(roomDTO);
         room = roomRepository.save(room);
+
+        // Log the room update
+        auditLogService.logAction("Room", room.getId(), "UPDATE");
+
         return roomMapper.toDto(room);
     }
 
@@ -59,7 +71,11 @@ public class RoomServiceImpl implements RoomService {
                 return existingRoom;
             })
             .map(roomRepository::save)
-            .map(roomMapper::toDto);
+            .map(room -> {
+                // Log the partial update
+                auditLogService.logAction("Room", room.getId(), "UPDATE");
+                return roomMapper.toDto(room);
+            });
     }
 
     @Override
@@ -80,6 +96,9 @@ public class RoomServiceImpl implements RoomService {
     public void delete(Long id) {
         LOG.debug("Request to delete Room : {}", id);
         roomRepository.deleteById(id);
+
+        // Log the room deletion
+        auditLogService.logAction("Room", id, "DELETE");
     }
 
     @Override

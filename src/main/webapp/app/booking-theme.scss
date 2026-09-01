@@ -593,3 +593,303 @@ select:focus-visible {
     font-size: 12px;
   }
 }
+
+/* ==========================================================================
+   Entity Management (Admin/CRUD Pages) Overhaul
+   ========================================================================== */
+
+/* Main Header for Entity Pages */
+h2[id$='-heading'] {
+  background-color: var(--booking-white);
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--booking-hairline);
+  margin-top: 24px;
+  margin-bottom: 24px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--booking-navy);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  /* Target the right-aligned button container inside heading */
+  .d-flex.justify-content-end {
+    gap: 12px;
+
+    .btn {
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-info {
+      background-color: var(--booking-surface-alt) !important;
+      color: var(--booking-navy) !important;
+      border: 1px solid var(--booking-hairline) !important;
+      &:hover {
+        background-color: var(--booking-hairline) !important;
+        color: var(--booking-navy-dark) !important;
+      }
+    }
+
+    .btn-primary {
+      background-color: var(--booking-blue) !important;
+      color: var(--booking-white) !important;
+      border: none !important;
+      &:hover {
+        background-color: var(--booking-blue-hover) !important;
+      }
+    }
+  }
+}
+
+/* Card-like Table Container */
+.table-responsive {
+  background-color: var(--booking-white);
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--booking-hairline);
+  margin-bottom: 24px;
+  overflow: hidden;
+
+  table.table {
+    margin-bottom: 0;
+
+    thead {
+      background-color: #f8f9fa;
+
+      th {
+        border-bottom: 2px solid var(--booking-hairline);
+        border-top: none;
+        color: var(--booking-body);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        padding: 16px;
+        white-space: nowrap;
+      }
+    }
+
+    tbody {
+      tr {
+        transition: background-color 0.15s ease;
+        &:hover {
+          background-color: #f0f7ff;
+        }
+      }
+
+      td {
+        border-bottom: 1px solid var(--booking-hairline);
+        border-top: none;
+        padding: 16px;
+        vertical-align: middle;
+        font-size: 14px;
+        color: var(--booking-canvas);
+      }
+    }
+  }
+}
+
+/* Action Buttons in Table Rows */
+.flex-btn-group-container {
+  gap: 6px;
+
+  .btn {
+    border-radius: 4px !important;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+  }
+
+  .btn-info {
+    background-color: #e6f4ff !important;
+    color: #006ce4 !important;
+    &:hover {
+      background-color: #cce5ff !important;
+    }
+  }
+
+  .btn-primary {
+    background-color: #f0f4f8 !important;
+    color: #333 !important;
+    &:hover {
+      background-color: #e2e8f0 !important;
+    }
+  }
+
+  .btn-danger {
+    background-color: #ffe6e6 !important;
+    color: #d93025 !important;
+    &:hover {
+      background-color: #ffcccc !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Entity Form & Detail Pages Overhaul
+   ========================================================================== */
+
+/* Edit/Create Form Headings and Detail Headings */
+h2[data-cy$='CreateUpdateHeading'],
+h2[data-cy$='DetailsHeading'],
+h2[id$='createOrEditLabel'] {
+  background-color: var(--booking-white);
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: var(--booking-shadow-sm);
+  border: 1px solid var(--booking-hairline);
+  margin: 24px auto;
+  max-width: 700px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--booking-navy);
+}
+
+/* Detail view list */
+dl.jh-entity-details {
+  background-color: var(--booking-white);
+  border: 1px solid var(--booking-hairline);
+  border-radius: 8px;
+  box-shadow: var(--booking-shadow-sm);
+  padding: 32px 24px;
+  margin: 0 auto 24px auto;
+  max-width: 700px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  row-gap: 20px;
+
+  dt {
+    font-weight: 600;
+    color: var(--booking-body);
+    font-size: 14px;
+    span {
+      display: block;
+    }
+  }
+
+  dd {
+    margin-bottom: 0;
+    color: var(--booking-canvas);
+    font-weight: 500;
+    font-size: 15px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+
+    &:last-of-type {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+}
+
+/* Edit/Create Forms Wrapping */
+.row.justify-content-center > .col-md-8 > form {
+  background-color: var(--booking-white);
+  border: 1px solid var(--booking-hairline);
+  border-radius: 8px;
+  box-shadow: var(--booking-shadow-sm);
+  padding: 32px 24px;
+  margin: 0 auto 32px auto;
+  max-width: 700px;
+
+  /* Form Labels */
+  .form-label {
+    font-weight: 600;
+    color: var(--booking-navy-dark);
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  /* Improve Inputs Globally inside these forms */
+  .form-control,
+  .form-select {
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    padding: 10px 12px;
+    font-size: 15px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition:
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+    background-color: #fcfcfc;
+
+    &:focus {
+      border-color: var(--booking-blue);
+      box-shadow: 0 0 0 3px rgba(0, 108, 228, 0.2);
+      background-color: var(--booking-white);
+    }
+  }
+
+  /* Form Action Buttons Container */
+  .btn {
+    margin-top: 16px;
+    margin-right: 12px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-info {
+    background-color: var(--booking-surface-alt) !important;
+    color: var(--booking-navy) !important;
+    border: 1px solid var(--booking-hairline) !important;
+    &:hover {
+      background-color: var(--booking-hairline) !important;
+      color: var(--booking-navy-dark) !important;
+    }
+  }
+
+  .btn-primary {
+    background-color: var(--booking-blue) !important;
+    color: var(--booking-white) !important;
+    border: none !important;
+    &:hover {
+      background-color: var(--booking-blue-hover) !important;
+    }
+  }
+}
+
+/* Detail View Action Buttons */
+.row > .col-md-8 > .btn {
+  margin-right: 12px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &.btn-info {
+    background-color: var(--booking-surface-alt) !important;
+    color: var(--booking-navy) !important;
+    border: 1px solid var(--booking-hairline) !important;
+    &:hover {
+      background-color: var(--booking-hairline) !important;
+      color: var(--booking-navy-dark) !important;
+    }
+  }
+
+  &.btn-primary {
+    background-color: var(--booking-blue) !important;
+    color: var(--booking-white) !important;
+    border: none !important;
+    &:hover {
+      background-color: var(--booking-blue-hover) !important;
+    }
+  }
+}

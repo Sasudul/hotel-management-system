@@ -49,7 +49,6 @@ const Header = (props: IHeaderProps) => {
         <Link to="/" className="booking-logo">
           <FontAwesomeIcon icon={faBuilding} style={{ color: '#FFB700' }} />
           <span>Grand Hotel Sri Lanka</span>
-          <span style={{ fontSize: '11px', fontWeight: 'normal', opacity: 0.8, marginLeft: '6px' }}>HMS</span>
         </Link>
 
         <div className="booking-top-actions">
@@ -58,19 +57,12 @@ const Header = (props: IHeaderProps) => {
           </button>
 
           {props.isAuthenticated ? (
-            <div className="d-flex align-items-center gap-2">
-              <span className="text-white fw-bold me-2" style={{ fontSize: '14px' }}>
-                <FontAwesomeIcon icon={faUser} className="me-1" />
+            <div className="d-flex align-items-center gap-3">
+              <span className="text-white fw-bold" style={{ fontSize: '14px' }}>
+                <FontAwesomeIcon icon={faUser} className="me-2" />
                 {account.login}
               </span>
-              <Nav className="d-inline-flex">
-                <Link to="/profile" className="text-white text-decoration-none me-3 mt-2">
-                  Profile
-                </Link>
-                {props.isAdmin && <EntitiesMenu />}
-                {props.isAdmin && <AdminMenu showOpenAPI={props.isOpenAPIEnabled} />}
-              </Nav>
-              <Link to="/logout" className="signin-btn text-decoration-none">
+              <Link to="/logout" className="signin-btn text-decoration-none border-0" style={{ padding: '8px 12px' }}>
                 <FontAwesomeIcon icon={faSignOutAlt} className="me-1" /> Sign out
               </Link>
             </div>
@@ -83,6 +75,22 @@ const Header = (props: IHeaderProps) => {
           )}
         </div>
       </div>
+
+      {/* Secondary Navbar for Authenticated Users (Pills) */}
+      {props.isAuthenticated && (
+        <div className="booking-subnav-bar">
+          <Nav className="d-flex align-items-center auth-nav-menu">
+            <Link to="/" className="nav-link">
+              Home
+            </Link>
+            <Link to="/profile" className="nav-link">
+              Profile
+            </Link>
+            {props.isAdmin && <EntitiesMenu />}
+            {props.isAdmin && <AdminMenu showOpenAPI={props.isOpenAPIEnabled} />}
+          </Nav>
+        </div>
+      )}
     </header>
   );
 };

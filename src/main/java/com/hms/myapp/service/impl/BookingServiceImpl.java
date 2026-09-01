@@ -2,6 +2,7 @@ package com.hms.myapp.service.impl;
 
 import com.hms.myapp.domain.Booking;
 import com.hms.myapp.repository.BookingRepository;
+import com.hms.myapp.service.AuditLogService;
 import com.hms.myapp.service.BookingNotificationService;
 import com.hms.myapp.service.BookingService;
 import com.hms.myapp.service.BookingValidationService;
@@ -34,18 +35,22 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingNotificationService bookingNotificationService;
 
+    private final AuditLogService auditLogService;
+
     public BookingServiceImpl(
         BookingRepository bookingRepository,
         BookingMapper bookingMapper,
         BookingValidationService bookingValidationService,
         com.hms.myapp.repository.RoomRepository roomRepository,
-        BookingNotificationService bookingNotificationService
+        BookingNotificationService bookingNotificationService,
+        AuditLogService auditLogService
     ) {
         this.bookingRepository = bookingRepository;
         this.bookingMapper = bookingMapper;
         this.bookingValidationService = bookingValidationService;
         this.roomRepository = roomRepository;
         this.bookingNotificationService = bookingNotificationService;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -71,6 +76,9 @@ public class BookingServiceImpl implements BookingService {
             // Production quality comment: Send confirmation email using MailService
             bookingNotificationService.sendBookingConfirmation(booking);
         }
+
+        // Log the booking creation
+        auditLogService.logAction("Booking", booking.getId(), "CREATE");
 
         return bookingMapper.toDto(booking);
     }
@@ -110,6 +118,9 @@ public class BookingServiceImpl implements BookingService {
             bookingNotificationService.sendBookingCancellation(booking);
         }
 
+        // Log the booking update
+        auditLogService.logAction("Booking", booking.getId(), "UPDATE");
+
         return bookingMapper.toDto(booking);
     }
 
@@ -146,7 +157,8 @@ public class BookingServiceImpl implements BookingService {
             .map(booking -> {
                 // Partial update doesn't have the old status easily available post save in the stream, but we already have it captured above.
                 // We shouldn't send emails here, it's better if partial update is handled properly, but actually we can check if status was changed to CONFIRMED.
-                // For simplicity, let's skip email on partial update or we could capture it. Let's just return.
+                // Log the partial update
+                auditLogService.logAction("Booking", booking.getId(), "UPDATE");
                 return bookingMapper.toDto(booking);
             });
     }
@@ -181,5 +193,8 @@ public class BookingServiceImpl implements BookingService {
     public void delete(Long id) {
         LOG.debug("Request to delete Booking : {}", id);
         bookingRepository.deleteById(id);
+
+        // Log the booking deletion
+        auditLogService.logAction("Booking", id, "DELETE");
     }
 }
