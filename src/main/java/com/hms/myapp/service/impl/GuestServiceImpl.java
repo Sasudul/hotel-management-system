@@ -93,6 +93,10 @@ public class GuestServiceImpl implements GuestService {
     @Transactional(readOnly = true)
     public Optional<GuestDTO> findByUserLogin(String login) {
         LOG.debug("Request to get Guest by user login : {}", login);
-        return guestRepository.findByUserLogin(login).map(guestMapper::toDto);
+        List<Guest> guests = guestRepository.findByUserLogin(login);
+        if (guests != null && !guests.isEmpty()) {
+            return Optional.of(guestMapper.toDto(guests.get(0)));
+        }
+        return Optional.empty();
     }
 }

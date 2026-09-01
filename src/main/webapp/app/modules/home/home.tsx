@@ -46,6 +46,7 @@ export const Home = () => {
   const isAuthenticated = useAppSelector(state => state.authentication.isAuthenticated);
   const account = useAppSelector(state => state.authentication.account);
   const isAdmin = useAppSelector(state => hasAnyAuthority(state.authentication.account.authorities, [Authority.ADMIN]));
+  const isReceptionist = useAppSelector(state => hasAnyAuthority(state.authentication.account.authorities, [Authority.RECEPTIONIST]));
 
   // Search & Filter State
   const [selectedType, setSelectedType] = useState<string>('ALL');
@@ -87,9 +88,25 @@ export const Home = () => {
   const [newRoomAmenities] = useState<string>('WiFi, Air Conditioning, TV, Balcony, Mini Bar');
   const [newRoomImageUrl, setNewRoomImageUrl] = useState<string>('');
 
+  // Add Booking Modal State (Staff)
+  const [showAddBookingModal, setShowAddBookingModal] = useState<boolean>(false);
+  const [newBookingRoomId, setNewBookingRoomId] = useState<number | ''>('');
+  const [newBookingCheckIn, setNewBookingCheckIn] = useState<string>(dayjs().format('YYYY-MM-DD'));
+  const [newBookingCheckOut, setNewBookingCheckOut] = useState<string>(dayjs().add(1, 'day').format('YYYY-MM-DD'));
+  const [newBookingGuestName, setNewBookingGuestName] = useState<string>('');
+  const [newBookingGuestPhone, setNewBookingGuestPhone] = useState<string>('');
+  const [newBookingStatus, setNewBookingStatus] = useState<string>('CONFIRMED');
+  const [newBookingTotalPrice, setNewBookingTotalPrice] = useState<number>(0);
+
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchBookings();
+    if (account && account.login) {
+      if (isAdmin || isReceptionist) {
+        setViewMode('staff');
+        fetchBookings();
+      } else {
+        setViewMode('guest');
+        fetchBookings();
+      }
       fetchGuests();
     }
   }, [isAuthenticated]);
@@ -285,6 +302,53 @@ export const Home = () => {
     }
   };
 
+  const handleCreateStaffBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBookingRoomId || !newBookingCheckIn || !newBookingCheckOut || !newBookingGuestName || !newBookingTotalPrice) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      let guestId = guests.length > 0 ? guests[0].id : null;
+      if (!guestId) {
+        try {
+          const guestRes = await axios.post<IGuest>('/api/guests', {
+            phone: newBookingGuestPhone || 'N/A',
+            address: 'Unknown',
+            idDocumentNumber: 'N/A',
+            user: account,
+          });
+          guestId = guestRes.data.id || 1;
+        } catch {
+          guestId = 1;
+        }
+      }
+
+      const bookingPayload = {
+        checkInDate: newBookingCheckIn,
+        checkOutDate: newBookingCheckOut,
+        status: newBookingStatus,
+        numberOfGuests: 1,
+        specialRequests: 'Manually added by staff for ' + newBookingGuestName,
+        room: { id: Number(newBookingRoomId) },
+        guest: { id: guestId },
+        totalAmount: newBookingTotalPrice,
+        createdDate: dayjs().toISOString(),
+      };
+
+      await axios.post('/api/bookings', bookingPayload);
+      toast.success('Booking successfully created!');
+      setShowAddBookingModal(false);
+      setNewBookingRoomId('');
+      setNewBookingGuestName('');
+      setNewBookingTotalPrice(0);
+      if (isAuthenticated) fetchBookings();
+    } catch (err: any) {
+      alert('Failed to add booking: ' + err.message);
+    }
+  };
+
   const handleUpdateBookingStatus = async (bookingId: number, newStatus: keyof typeof BookingStatus) => {
     try {
       const b = bookings.find(item => item.id === bookingId);
@@ -319,7 +383,7 @@ export const Home = () => {
               <h1 className="hero-title">Find your next stay</h1>
               <p className="hero-subtitle">Search low prices on hotels, luxury suites, resorts, and much more...</p>
             </div>
-            {isAdmin && (
+            {account?.login && (isAdmin || isReceptionist) && (
               <div className="bg-white text-dark p-2 rounded shadow-sm">
                 <Button
                   variant={viewMode === 'guest' ? 'primary' : 'outline-primary'}
@@ -605,9 +669,14 @@ export const Home = () => {
                 <FontAwesomeIcon icon={faConciergeBell} className="me-2" />
                 Hotel Operations Console
               </h3>
-              <Button variant="success" onClick={() => setShowAddRoomModal(true)}>
-                <FontAwesomeIcon icon={faPlus} className="me-1" /> Add New Room
-              </Button>
+              <div className="d-flex gap-2">
+                <Button variant="primary" onClick={() => setShowAddBookingModal(true)}>
+                  <FontAwesomeIcon icon={faPlus} className="me-1" /> Add Booking
+                </Button>
+                <Button variant="success" onClick={() => setShowAddRoomModal(true)}>
+                  <FontAwesomeIcon icon={faPlus} className="me-1" /> Add Room
+                </Button>
+              </div>
             </div>
 
             <Tab.Container defaultActiveKey="rooms-tab">
@@ -636,6 +705,7 @@ export const Home = () => {
                         <th>Price/Night</th>
                         <th>Status</th>
                         <th>Amenities</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -648,9 +718,34 @@ export const Home = () => {
                           <td>{r.capacity} Persons</td>
                           <td className="fw-bold text-success">Rs. {r.pricePerNight}</td>
                           <td>
-                            <Badge bg={r.status === 'AVAILABLE' ? 'success' : 'warning'}>{r.status}</Badge>
+                            {(() => {
+                              const today = dayjs();
+                              const activeBooking = bookings.find(
+                                b =>
+                                  b.room?.id === r.id &&
+                                  b.status === 'CONFIRMED' &&
+                                  dayjs(b.checkInDate).isBefore(today.add(1, 'day'), 'day') &&
+                                  dayjs(b.checkOutDate).isAfter(today.subtract(1, 'day'), 'day'),
+                              );
+                              if (activeBooking) {
+                                return <Badge bg="danger">BOOKED till {dayjs(activeBooking.checkOutDate).format('MMM D')}</Badge>;
+                              }
+                              return <Badge bg={r.status === 'AVAILABLE' ? 'success' : 'warning'}>{r.status}</Badge>;
+                            })()}
                           </td>
                           <td className="small text-muted">{r.amenities || 'Standard'}</td>
+                          <td>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() => {
+                                setNewBookingRoomId(r.id || '');
+                                setShowAddBookingModal(true);
+                              }}
+                            >
+                              <FontAwesomeIcon icon={faPlus} className="me-1" /> Book Room
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -951,6 +1046,87 @@ export const Home = () => {
             </Button>
             <Button variant="primary" type="submit">
               Save Room
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Staff Add Booking Modal */}
+      <Modal show={showAddBookingModal} onHide={() => setShowAddBookingModal(false)} centered>
+        <Modal.Header closeButton className="bg-dark text-white">
+          <Modal.Title>
+            <FontAwesomeIcon icon={faPlus} className="me-2" /> Add New Booking
+          </Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleCreateStaffBooking}>
+          <Modal.Body>
+            <Row className="g-3">
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Select Room</Form.Label>
+                  <Form.Select required value={newBookingRoomId} onChange={e => setNewBookingRoomId(Number(e.target.value))}>
+                    <option value="">-- Choose a Room --</option>
+                    {safeRoomsList.map(r => (
+                      <option key={r.id} value={r.id}>
+                        Room #{r.roomNumber} ({r.roomType}) - LKR {r.pricePerNight}/night
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Check-in Date</Form.Label>
+                  <Form.Control type="date" required value={newBookingCheckIn} onChange={e => setNewBookingCheckIn(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Check-out Date</Form.Label>
+                  <Form.Control type="date" required value={newBookingCheckOut} onChange={e => setNewBookingCheckOut(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Guest Name</Form.Label>
+                  <Form.Control type="text" required value={newBookingGuestName} onChange={e => setNewBookingGuestName(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Guest Phone</Form.Label>
+                  <Form.Control type="text" required value={newBookingGuestPhone} onChange={e => setNewBookingGuestPhone(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Total Price (LKR)</Form.Label>
+                  <Form.Control
+                    type="number"
+                    required
+                    value={newBookingTotalPrice}
+                    onChange={e => setNewBookingTotalPrice(Number(e.target.value))}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">Status</Form.Label>
+                  <Form.Select value={newBookingStatus} onChange={e => setNewBookingStatus(e.target.value)}>
+                    <option value="CONFIRMED">CONFIRMED</option>
+                    <option value="PENDING">PENDING</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowAddBookingModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit">
+              Save Booking
             </Button>
           </Modal.Footer>
         </Form>

@@ -6,34 +6,20 @@ import { NavDropdown } from './menu-components';
 
 const adminMenuItems = () => (
   <>
-    <MenuItem icon="tachometer-alt" to="/admin/metrics">
-      Metrics
-    </MenuItem>
-    <MenuItem icon="heart" to="/admin/health">
-      Health
-    </MenuItem>
-    <MenuItem icon="cogs" to="/admin/configuration">
-      Configuration
-    </MenuItem>
     <MenuItem icon="tasks" to="/admin/logs">
-      Logs
+      System Logs
     </MenuItem>
     <MenuItem icon="history" to="/admin/audits">
-      Audits
+      Activity Logs
     </MenuItem>
-    {/* jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here */}
+    <MenuItem icon="users" to="/admin/user-management">
+      Manage Staff Accounts
+    </MenuItem>
   </>
 );
 
-const openAPIItem = () => (
-  <MenuItem icon="book" to="/admin/docs">
-    API
-  </MenuItem>
-);
-
-export const AdminMenu = ({ showOpenAPI }) => (
-  <NavDropdown icon="users-cog" name="Administration" id="admin-menu" data-cy="adminMenu">
+export const AdminMenu = () => (
+  <NavDropdown icon="cogs" name="System" id="admin-menu" data-cy="adminMenu">
     {adminMenuItems()}
-    {showOpenAPI && openAPIItem()}
   </NavDropdown>
 );

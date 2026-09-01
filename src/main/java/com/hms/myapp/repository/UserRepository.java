@@ -1,6 +1,7 @@
 package com.hms.myapp.repository;
 
 import com.hms.myapp.domain.User;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -16,6 +17,9 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @EntityGraph(attributePaths = "authorities")
     Optional<User> findOneWithAuthoritiesByLogin(String login);
+
+    @EntityGraph(attributePaths = "authorities")
+    List<User> findAllWithAuthoritiesBy();
 
     Page<User> findAllByIdNotNullAndActivatedIsTrue(Pageable pageable);
 }

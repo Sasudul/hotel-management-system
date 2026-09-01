@@ -8,12 +8,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faSignOutAlt, faSignInAlt, faBuilding } from '@fortawesome/free-solid-svg-icons';
 
 import { useAppSelector } from 'app/config/store';
-import { AdminMenu, EntitiesMenu } from '../menus';
+import { EntitiesMenu, AdminMenu } from '../menus';
 import { getLoginUrl } from 'app/shared/util/url-utils';
 
 export interface IHeaderProps {
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isReceptionist?: boolean;
   ribbonEnv: string;
   isInProduction: boolean;
   isOpenAPIEnabled: boolean;
@@ -86,8 +87,8 @@ const Header = (props: IHeaderProps) => {
             <Link to="/profile" className="nav-link">
               Profile
             </Link>
-            {props.isAdmin && <EntitiesMenu />}
-            {props.isAdmin && <AdminMenu showOpenAPI={props.isOpenAPIEnabled} />}
+            {(props.isAdmin || props.isReceptionist) && <EntitiesMenu />}
+            {props.isAdmin && <AdminMenu />}
           </Nav>
         </div>
       )}

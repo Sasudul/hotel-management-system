@@ -35,5 +35,5 @@ public interface GuestRepository extends JpaRepository<Guest, Long> {
     @Query("select guest from Guest guest left join fetch guest.user where guest.id =:id")
     Optional<Guest> findOneWithToOneRelationships(@Param("id") Long id);
 
-    Optional<Guest> findByUserLogin(String login);
+    List<Guest> findByUserLogin(String login);
 }

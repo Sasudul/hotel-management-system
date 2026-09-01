@@ -7,4 +7,5 @@ export const CSRF_TOKEN_COOKIE_NAME = 'XSRF-TOKEN';
 export enum Authority {
   ADMIN = 'ROLE_ADMIN',
   USER = 'ROLE_USER',
+  RECEPTIONIST = 'ROLE_RECEPTIONIST',
 }

@@ -60,7 +60,7 @@ export const Audits = () => {
   return (
     <div>
       <h2 id="audits-page-heading" data-cy="auditsPageHeading">
-        <FontAwesomeIcon icon={faHistory} /> Audit Logs
+        <FontAwesomeIcon icon={faHistory} /> Activity Logs
       </h2>
       <p className="text-muted">A complete history of actions performed by staff members on Bookings and Rooms.</p>
       <div className="table-responsive">
