@@ -1,4 +1,5 @@
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-datepicker/dist/react-datepicker.css';
 import './app.scss';
 import './booking-theme.scss';
 import 'app/config/dayjs';
@@ -12,7 +13,6 @@ import AppRoutes from 'app/routes';
 import { hasAnyAuthority } from 'app/shared/auth/private-route';
 import ErrorBoundary from 'app/shared/error/error-boundary';
 import { Authority } from 'app/shared/jhipster/constants';
-import Footer from 'app/shared/layout/footer/footer';
 import Header from 'app/shared/layout/header/header';
 import { getProfile } from 'app/shared/reducers/application-profile';
 import { getSession } from 'app/shared/reducers/authentication';
@@ -51,7 +51,6 @@ export const App = () => {
             <AppRoutes />
           </ErrorBoundary>
         </main>
-        <Footer />
       </div>
     </BrowserRouter>
   );

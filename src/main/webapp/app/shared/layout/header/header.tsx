@@ -1,11 +1,11 @@
 import './header.scss';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Nav } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router';
 import LoadingBar, { LoadingBarRef } from 'react-top-loading-bar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBed, faUser, faSignOutAlt, faSignInAlt, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faSignOutAlt, faSignInAlt, faBuilding } from '@fortawesome/free-solid-svg-icons';
 
 import { useAppSelector } from 'app/config/store';
 import { AdminMenu, EntitiesMenu } from '../menus';
@@ -25,8 +25,6 @@ const Header = (props: IHeaderProps) => {
   const account = useAppSelector(state => state.authentication.account);
   const navigate = useNavigate();
   const pageLocation = useLocation();
-
-  const [activeTab, setActiveTab] = useState('stays');
 
   useEffect(() => {
     if (loadingCount > 0) {
@@ -84,14 +82,6 @@ const Header = (props: IHeaderProps) => {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Subnav Navigation Ribbon */}
-      <div className="booking-subnav-bar">
-        <button className={`booking-subnav-item ${activeTab === 'stays' ? 'active' : ''}`} onClick={() => setActiveTab('stays')}>
-          <FontAwesomeIcon icon={faBed} />
-          <span>Stays</span>
-        </button>
       </div>
     </header>
   );

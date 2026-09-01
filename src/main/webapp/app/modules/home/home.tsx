@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Row, Col, Badge, Modal, Form, Button, Alert, Tab, Nav } from 'react-bootstrap';
 import axios from 'axios';
 import dayjs from 'dayjs';
+import DatePicker from 'react-datepicker';
+import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBed,
@@ -32,6 +34,8 @@ import { IBooking } from 'app/shared/model/booking.model';
 import { IGuest } from 'app/shared/model/guest.model';
 import { RoomType } from 'app/shared/model/enumerations/room-type.model';
 import { BookingStatus } from 'app/shared/model/enumerations/booking-status.model';
+import { Authority } from 'app/shared/jhipster/constants';
+import { hasAnyAuthority } from 'app/shared/auth/private-route';
 
 // Production quality comment: Hardcoded room images removed for production.
 const DEFAULT_ROOM_IMAGE = 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80';
@@ -39,11 +43,12 @@ const DEFAULT_ROOM_IMAGE = 'https://images.unsplash.com/photo-1618773928121-c322
 export const Home = () => {
   const isAuthenticated = useAppSelector(state => state.authentication.isAuthenticated);
   const account = useAppSelector(state => state.authentication.account);
+  const isAdmin = useAppSelector(state => hasAnyAuthority(state.authentication.account.authorities, [Authority.ADMIN]));
 
   // Search & Filter State
   const [selectedType, setSelectedType] = useState<string>('ALL');
-  const [checkInDate, setCheckInDate] = useState<string>(dayjs().format('YYYY-MM-DD'));
-  const [checkOutDate, setCheckOutDate] = useState<string>(dayjs().add(3, 'day').format('YYYY-MM-DD'));
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([dayjs().toDate(), dayjs().add(3, 'day').toDate()]);
+  const [startDate, endDate] = dateRange;
   const [guestCount, setGuestCount] = useState<number>(2);
   const [maxPrice, setMaxPrice] = useState<number>(100000);
 
@@ -76,7 +81,6 @@ export const Home = () => {
   const [newRoomImageUrl, setNewRoomImageUrl] = useState<string>('');
 
   useEffect(() => {
-    fetchRooms();
     if (isAuthenticated) {
       fetchBookings();
       fetchGuests();
@@ -89,17 +93,33 @@ export const Home = () => {
     return [];
   };
 
-  const fetchRooms = async () => {
+  const fetchAvailableRooms = async () => {
+    if (!startDate || !endDate) return;
     setLoading(true);
     try {
-      const res = await axios.get<IRoom[]>('/api/rooms');
+      const res = await axios.get<IRoom[]>('/api/rooms/available', {
+        params: {
+          checkIn: dayjs(startDate).format('YYYY-MM-DD'),
+          checkOut: dayjs(endDate).format('YYYY-MM-DD'),
+        },
+      });
       setRooms(extractArray(res.data));
     } catch (err) {
-      console.error('Error fetching rooms:', err);
+      console.error('Error fetching available rooms:', err);
       setRooms([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      fetchAvailableRooms();
+    }
+  }, [startDate, endDate]);
+
+  const fetchRooms = () => {
+    fetchAvailableRooms();
   };
 
   const fetchBookings = async () => {
@@ -122,24 +142,9 @@ export const Home = () => {
     }
   };
 
-  const handleSearchSubmit = async (_e: React.FormEvent) => {
+  const handleSearchSubmit = (_e: React.FormEvent) => {
     _e.preventDefault();
-    setLoading(true);
-    try {
-      if (checkInDate && checkOutDate) {
-        const res = await axios.get<IRoom[]>(`/api/rooms/available`, {
-          params: { checkIn: checkInDate, checkOut: checkOutDate },
-        });
-        setRooms(extractArray(res.data));
-      } else {
-        await fetchRooms();
-      }
-    } catch (err) {
-      console.error('Error fetching available rooms:', err);
-      fetchRooms();
-    } finally {
-      setLoading(false);
-    }
+    fetchAvailableRooms();
   };
 
   const handleOpenReserveModal = (room: IRoom) => {
@@ -149,9 +154,9 @@ export const Home = () => {
   };
 
   const calculateNights = () => {
-    if (!checkInDate || !checkOutDate) return 1;
-    const start = dayjs(checkInDate);
-    const end = dayjs(checkOutDate);
+    if (!startDate || !endDate) return 1;
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
     const diff = end.diff(start, 'day');
     return diff > 0 ? diff : 1;
   };
@@ -163,12 +168,16 @@ export const Home = () => {
   const handleConfirmBooking = async () => {
     if (!selectedRoom) return;
 
-    if (dayjs(checkInDate).isBefore(dayjs().startOf('day'))) {
-      alert('Check-in date cannot be in the past.');
+    if (!startDate || !endDate) {
+      toast.error('Please select both Check-in and Check-out dates.');
       return;
     }
-    if (dayjs(checkOutDate).diff(dayjs(checkInDate), 'day') <= 0) {
-      alert('Check-out date must be after check-in date.');
+    if (dayjs(startDate).isBefore(dayjs().startOf('day'))) {
+      toast.error('Check-in date cannot be in the past.');
+      return;
+    }
+    if (dayjs(endDate).diff(dayjs(startDate), 'day') <= 0) {
+      toast.error('Check-out date must be after check-in date.');
       return;
     }
 
@@ -194,8 +203,8 @@ export const Home = () => {
 
       // 2. Create Booking
       const bookingPayload = {
-        checkInDate: dayjs(checkInDate).format('YYYY-MM-DD'),
-        checkOutDate: dayjs(checkOutDate).format('YYYY-MM-DD'),
+        checkInDate: dayjs(startDate).format('YYYY-MM-DD'),
+        checkOutDate: dayjs(endDate).format('YYYY-MM-DD'),
         status: 'CONFIRMED',
         numberOfGuests: guestCount,
         specialRequests: specialRequests || 'Pay at hotel booking',
@@ -276,7 +285,7 @@ export const Home = () => {
               <h1 className="hero-title">Find your next stay</h1>
               <p className="hero-subtitle">Search low prices on hotels, luxury suites, resorts, and much more...</p>
             </div>
-            {isAuthenticated && (
+            {isAdmin && (
               <div className="bg-white text-dark p-2 rounded shadow-sm">
                 <Button
                   variant={viewMode === 'guest' ? 'primary' : 'outline-primary'}
@@ -284,7 +293,7 @@ export const Home = () => {
                   className="me-2"
                   onClick={() => setViewMode('guest')}
                 >
-                  <FontAwesomeIcon icon={faBed} className="me-1" /> Guest View
+                  <FontAwesomeIcon icon={faUser} className="me-1" /> Guest View
                 </Button>
                 <Button
                   variant={viewMode === 'staff' ? 'navy' : 'outline-dark'}
@@ -321,15 +330,20 @@ export const Home = () => {
               </div>
 
               {/* Dates Selector */}
-              <div className="search-field-box">
+              <div className="search-field-box" style={{ minWidth: '300px' }}>
                 <FontAwesomeIcon icon={faCalendarAlt} className="field-icon" />
-                <div className="field-content">
+                <div className="field-content w-100">
                   <label>Check-in — Check-out</label>
-                  <div className="d-flex gap-1 align-items-center">
-                    <input type="date" value={checkInDate} onChange={e => setCheckInDate(e.target.value)} />
-                    <span className="text-muted">–</span>
-                    <input type="date" value={checkOutDate} onChange={e => setCheckOutDate(e.target.value)} />
-                  </div>
+                  <DatePicker
+                    selectsRange={true}
+                    startDate={startDate || undefined}
+                    endDate={endDate || undefined}
+                    onChange={(update: [Date | null, Date | null]) => setDateRange(update)}
+                    minDate={new Date()}
+                    className="form-control border-0 p-0 shadow-none bg-transparent w-100 fw-bold"
+                    placeholderText="Select dates"
+                    dateFormat="MM/dd/yyyy"
+                  />
                 </div>
               </div>
 
@@ -415,8 +429,8 @@ export const Home = () => {
                     Luxury Rooms & Suites ({filteredRooms.length})
                   </h4>
                   <span className="text-muted small">
-                    Showing stays from {dayjs(checkInDate).format('MMM D')} – {dayjs(checkOutDate).format('MMM D')} ({calculateNights()}{' '}
-                    {calculateNights() === 1 ? 'night' : 'nights'})
+                    Showing stays from {startDate ? dayjs(startDate).format('MMM D') : '...'} –{' '}
+                    {endDate ? dayjs(endDate).format('MMM D') : '...'} ({calculateNights()} {calculateNights() === 1 ? 'night' : 'nights'})
                   </span>
                 </div>
 
@@ -447,7 +461,7 @@ export const Home = () => {
                         <div className="room-card-details">
                           <div>
                             <h3 className="room-title">
-                              {room.roomType} Room — #{room.roomNumber}
+                              {room.roomType} Room #{room.roomNumber}
                             </h3>
                             <div className="room-subtext">
                               <FontAwesomeIcon icon={faMapMarkerAlt} className="text-primary me-1" />
@@ -659,11 +673,11 @@ export const Home = () => {
                 </div>
                 <div className="d-flex justify-content-between mb-2 border-bottom pb-2">
                   <span className="text-muted">Check-in Date:</span>
-                  <span className="fw-bold">{dayjs(checkInDate).format('dddd, MMMM D, YYYY')}</span>
+                  <span className="fw-bold">{startDate ? dayjs(startDate).format('dddd, MMMM D, YYYY') : '-'}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2 border-bottom pb-2">
                   <span className="text-muted">Check-out Date:</span>
-                  <span className="fw-bold">{dayjs(checkOutDate).format('dddd, MMMM D, YYYY')}</span>
+                  <span className="fw-bold">{endDate ? dayjs(endDate).format('dddd, MMMM D, YYYY') : '-'}</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2 border-bottom pb-2">
                   <span className="text-muted">Total Price (Pay at Hotel):</span>
@@ -698,10 +712,11 @@ export const Home = () => {
               >
                 <div>
                   <h4 className="fw-bold m-0 text-primary">
-                    {selectedRoom?.roomType} Room — #{selectedRoom?.roomNumber}
+                    {selectedRoom?.roomType} Room #{selectedRoom?.roomNumber}
                   </h4>
                   <span className="text-muted small">
-                    {calculateNights()} nights ({checkInDate} to {checkOutDate})
+                    {calculateNights()} nights ({startDate ? dayjs(startDate).format('YYYY-MM-DD') : '-'} to{' '}
+                    {endDate ? dayjs(endDate).format('YYYY-MM-DD') : '-'})
                   </span>
                 </div>
                 <div className="text-end">
