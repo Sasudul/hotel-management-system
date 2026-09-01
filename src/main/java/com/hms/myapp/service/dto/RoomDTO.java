@@ -38,7 +38,7 @@ public class RoomDTO implements Serializable {
     @Size(max = 500)
     private String amenities;
 
-    // A simple single-line comment for production quality: Image URL for the room
+    // Room photo shown on booking screens.
     @Size(max = 1000)
     private String imageUrl;
 

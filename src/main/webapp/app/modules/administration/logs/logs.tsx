@@ -1,103 +1,120 @@
 import React, { useEffect, useState } from 'react';
+import { Badge, Button, ButtonGroup, Table } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClipboardList, faSyncAlt, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import axios from 'axios';
+import dayjs from 'dayjs';
 
-import { useAppDispatch, useAppSelector } from 'app/config/store';
-import { changeLogLevel, getLoggers } from '../administration.reducer';
+type SystemLog = {
+  id: number;
+  action: string;
+  performedBy: string;
+  actorRole: string;
+  details: string;
+  performedDate: string;
+};
+
+const roleFilters = [
+  { label: 'All Logs', value: '' },
+  { label: 'Staff Users', value: 'STAFF' },
+  { label: 'Admins', value: 'ADMIN' },
+  { label: 'Guest Users', value: 'USER' },
+];
 
 export const LogsPage = () => {
-  const [filter, setFilter] = useState('');
-  const logs = useAppSelector(state => state.administration.logs);
-  const isFetching = useAppSelector(state => state.administration.loading);
-  const dispatch = useAppDispatch();
+  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const [roleFilter, setRoleFilter] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const fetchSystemLogs = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get<SystemLog[]>('/api/admin/audits/system', {
+        params: {
+          size: 100,
+          sort: 'performedDate,desc',
+          ...(roleFilter ? { actorRole: roleFilter } : {}),
+        },
+      });
+      setLogs(response.data);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    dispatch(getLoggers());
-  }, []);
+    fetchSystemLogs();
+  }, [roleFilter]);
 
-  const changeLevel = (loggerName, level) => () => dispatch(changeLogLevel(loggerName, level));
-
-  const changeFilter = evt => setFilter(evt.target.value);
-
-  const getClassName = (level, check, className) => `btn btn-sm btn-${level === check ? className : 'light'}`;
-
-  const filterFn = l => l.name.toUpperCase().includes(filter.toUpperCase());
-
-  const loggers = logs ? Object.entries(logs.loggers).map((e: any) => ({ name: e[0], level: e[1].effectiveLevel })) : [];
+  const badgeVariant = (role: string) => {
+    if (role === 'ADMIN') return 'danger';
+    if (role === 'STAFF') return 'info';
+    if (role === 'USER') return 'success';
+    return 'secondary';
+  };
 
   return (
-    <div>
-      <h2 id="logs-page-heading" data-cy="logsPageHeading">
-        Logs
-      </h2>
-      <p>There are {loggers.length} loggers.</p>
+    <div className="hms-admin-shell">
+      <div className="hms-admin-header">
+        <div>
+          <h2 id="logs-page-heading" data-cy="logsPageHeading">
+            <FontAwesomeIcon icon={faClipboardList} className="me-2 text-primary" />
+            System Logs
+          </h2>
+          <p>Track who signed in, when they entered the system, and which authority level they used.</p>
+        </div>
+        <Button variant="outline-primary" onClick={fetchSystemLogs} disabled={loading}>
+          <FontAwesomeIcon icon={faSyncAlt} spin={loading} className="me-2" />
+          Refresh
+        </Button>
+      </div>
 
-      <span>Filter</span>
-      <input type="text" value={filter} onChange={changeFilter} className="form-control" disabled={isFetching} />
-
-      <table className="table table-sm table-striped table-bordered" aria-describedby="logs-page-heading">
-        <thead>
-          <tr title="click to order">
-            <th>
-              <span>Name</span>
-            </th>
-            <th>
-              <span>Level</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {loggers.filter(filterFn).map((logger, i) => (
-            <tr key={`log-row-${i}`}>
-              <td>
-                <small>{logger.name}</small>
-              </td>
-              <td>
-                <button
-                  disabled={isFetching}
-                  onClick={changeLevel(logger.name, 'TRACE')}
-                  className={getClassName(logger.level, 'TRACE', 'primary')}
-                >
-                  TRACE
-                </button>
-                <button
-                  disabled={isFetching}
-                  onClick={changeLevel(logger.name, 'DEBUG')}
-                  className={getClassName(logger.level, 'DEBUG', 'success')}
-                >
-                  DEBUG
-                </button>
-                <button
-                  disabled={isFetching}
-                  onClick={changeLevel(logger.name, 'INFO')}
-                  className={getClassName(logger.level, 'INFO', 'info')}
-                >
-                  INFO
-                </button>
-                <button
-                  disabled={isFetching}
-                  onClick={changeLevel(logger.name, 'WARN')}
-                  className={getClassName(logger.level, 'WARN', 'warning')}
-                >
-                  WARN
-                </button>
-                <button
-                  disabled={isFetching}
-                  onClick={changeLevel(logger.name, 'ERROR')}
-                  className={getClassName(logger.level, 'ERROR', 'danger')}
-                >
-                  ERROR
-                </button>
-                <button
-                  disabled={isFetching}
-                  onClick={changeLevel(logger.name, 'OFF')}
-                  className={getClassName(logger.level, 'OFF', 'secondary')}
-                >
-                  OFF
-                </button>
-              </td>
-            </tr>
+      <div className="hms-filter-bar">
+        <FontAwesomeIcon icon={faUserShield} className="text-primary" />
+        <ButtonGroup>
+          {roleFilters.map(filter => (
+            <Button
+              key={filter.value || 'all'}
+              variant={roleFilter === filter.value ? 'primary' : 'outline-primary'}
+              onClick={() => setRoleFilter(filter.value)}
+            >
+              {filter.label}
+            </Button>
           ))}
-        </tbody>
-      </table>
+        </ButtonGroup>
+      </div>
+
+      <div className="table-responsive">
+        <Table responsive hover className="align-middle">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>User</th>
+              <th>Authority</th>
+              <th>Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map(log => (
+              <tr key={log.id}>
+                <td className="fw-semibold">{dayjs(log.performedDate).format('YYYY-MM-DD HH:mm:ss')}</td>
+                <td>{log.performedBy}</td>
+                <td>
+                  <Badge bg={badgeVariant(log.actorRole)}>{log.actorRole || 'SYSTEM'}</Badge>
+                </td>
+                <td>{log.details || log.action}</td>
+              </tr>
+            ))}
+            {!loading && logs.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center text-muted py-4">
+                  No login activity found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </Table>
+      </div>
     </div>
   );
 };

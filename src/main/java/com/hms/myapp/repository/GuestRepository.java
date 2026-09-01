@@ -36,4 +36,6 @@ public interface GuestRepository extends JpaRepository<Guest, Long> {
     Optional<Guest> findOneWithToOneRelationships(@Param("id") Long id);
 
     List<Guest> findByUserLogin(String login);
+
+    Optional<Guest> findOneByUserId(String userId);
 }

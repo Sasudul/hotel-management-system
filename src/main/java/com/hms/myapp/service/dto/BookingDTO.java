@@ -42,11 +42,22 @@ public class BookingDTO implements Serializable {
     @Size(max = 500)
     private String cancelledReason;
 
-    @NotNull
     private GuestDTO guest;
 
     @NotNull
     private RoomDTO room;
+
+    @Email
+    @Size(min = 5, max = 254)
+    private String guestEmail;
+
+    @Size(max = 100)
+    private String guestName;
+
+    @Pattern(regexp = "^[0-9+\\-\\s]{7,20}$")
+    private String guestPhone;
+
+    private String guestIdDocumentNumber;
 
     public Long getId() {
         return id;
@@ -136,6 +147,38 @@ public class BookingDTO implements Serializable {
         this.room = room;
     }
 
+    public String getGuestEmail() {
+        return guestEmail;
+    }
+
+    public void setGuestEmail(String guestEmail) {
+        this.guestEmail = guestEmail;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public void setGuestName(String guestName) {
+        this.guestName = guestName;
+    }
+
+    public String getGuestPhone() {
+        return guestPhone;
+    }
+
+    public void setGuestPhone(String guestPhone) {
+        this.guestPhone = guestPhone;
+    }
+
+    public String getGuestIdDocumentNumber() {
+        return guestIdDocumentNumber;
+    }
+
+    public void setGuestIdDocumentNumber(String guestIdDocumentNumber) {
+        this.guestIdDocumentNumber = guestIdDocumentNumber;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -172,6 +215,7 @@ public class BookingDTO implements Serializable {
             ", cancelledReason='" + getCancelledReason() + "'" +
             ", guest=" + getGuest() +
             ", room=" + getRoom() +
+            ", guestEmail='" + getGuestEmail() + "'" +
             "}";
     }
 }

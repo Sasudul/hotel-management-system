@@ -1,7 +1,9 @@
 package com.hms.myapp.web.rest;
 
+import com.hms.myapp.service.AuditLogService;
 import com.hms.myapp.service.UserService;
 import com.hms.myapp.service.dto.AdminUserDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.Serial;
 import java.security.Principal;
 import org.slf4j.Logger;
@@ -34,8 +36,11 @@ public class AccountResource {
 
     private final UserService userService;
 
-    public AccountResource(UserService userService) {
+    private final AuditLogService auditLogService;
+
+    public AccountResource(UserService userService, AuditLogService auditLogService) {
         this.userService = userService;
+        this.auditLogService = auditLogService;
     }
 
     /**
@@ -46,9 +51,14 @@ public class AccountResource {
      * @throws AccountResourceException {@code 500 (Internal Server Error)} if the user couldn't be returned.
      */
     @GetMapping("/account")
-    public AdminUserDTO getAccount(Principal principal) {
+    public AdminUserDTO getAccount(Principal principal, HttpServletRequest request) {
         if (principal instanceof AbstractAuthenticationToken authToken) {
-            return userService.getUserFromAuthentication(authToken);
+            AdminUserDTO account = userService.getUserFromAuthentication(authToken);
+            if (request.getSession().getAttribute("loginAuditRecorded") == null) {
+                auditLogService.logLogin(account.getLogin(), resolveActorRole(account));
+                request.getSession().setAttribute("loginAuditRecorded", Boolean.TRUE);
+            }
+            return account;
         } else {
             throw new AccountResourceException("User could not be found");
         }
@@ -64,5 +74,15 @@ public class AccountResource {
     public ResponseEntity<Void> isAuthenticated(Principal principal) {
         LOG.debug("REST request to check if the current user is authenticated");
         return ResponseEntity.status(principal == null ? HttpStatus.UNAUTHORIZED : HttpStatus.NO_CONTENT).build();
+    }
+
+    private String resolveActorRole(AdminUserDTO account) {
+        if (account.getAuthorities() != null && account.getAuthorities().contains("ROLE_ADMIN")) {
+            return "ADMIN";
+        }
+        if (account.getAuthorities() != null && account.getAuthorities().contains("ROLE_RECEPTIONIST")) {
+            return "STAFF";
+        }
+        return "USER";
     }
 }

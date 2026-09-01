@@ -11,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tech.jhipster.web.util.PaginationUtil;
@@ -40,6 +41,20 @@ public class AuditLogResource {
     public ResponseEntity<List<AuditLog>> getAllAuditLogs(@org.springdoc.core.annotations.ParameterObject Pageable pageable) {
         LOG.debug("REST request to get a page of Audit Logs");
         Page<AuditLog> page = auditLogRepository.findAllByOrderByPerformedDateDesc(pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    @GetMapping("/system")
+    public ResponseEntity<List<AuditLog>> getSystemLogs(
+        @org.springdoc.core.annotations.ParameterObject Pageable pageable,
+        @RequestParam(name = "actorRole", required = false) String actorRole
+    ) {
+        LOG.debug("REST request to get a page of System Logs for role {}", actorRole);
+        Page<AuditLog> page =
+            actorRole == null || actorRole.isBlank()
+                ? auditLogRepository.findAllByEntityNameOrderByPerformedDateDesc("System", pageable)
+                : auditLogRepository.findAllByEntityNameAndActorRoleOrderByPerformedDateDesc("System", actorRole, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }

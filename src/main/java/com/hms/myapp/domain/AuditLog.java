@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.time.Instant;
 
 /**
- * A simple entity to track audit events like CREATE, UPDATE, DELETE.
+ * Records important hotel system activity for administrators.
  */
 @Entity
 @Table(name = "audit_log")
@@ -20,30 +20,48 @@ public class AuditLog implements Serializable {
     @Column(name = "entity_name", nullable = false)
     private String entityName;
 
-    @Column(name = "entity_id", nullable = false)
+    @Column(name = "entity_id")
     private Long entityId;
 
     @Column(name = "action", nullable = false)
-    private String action; // CREATE, UPDATE, DELETE
+    private String action;
 
     @Column(name = "performed_by")
     private String performedBy;
 
+    @Column(name = "actor_role")
+    private String actorRole;
+
+    @Column(name = "details", length = 1000)
+    private String details;
+
     @Column(name = "performed_date")
     private Instant performedDate;
 
-    // Default Constructor
     public AuditLog() {}
 
     public AuditLog(String entityName, Long entityId, String action, String performedBy, Instant performedDate) {
+        this(entityName, entityId, action, performedBy, null, null, performedDate);
+    }
+
+    public AuditLog(
+        String entityName,
+        Long entityId,
+        String action,
+        String performedBy,
+        String actorRole,
+        String details,
+        Instant performedDate
+    ) {
         this.entityName = entityName;
         this.entityId = entityId;
         this.action = action;
         this.performedBy = performedBy;
+        this.actorRole = actorRole;
+        this.details = details;
         this.performedDate = performedDate;
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -82,6 +100,22 @@ public class AuditLog implements Serializable {
 
     public void setPerformedBy(String performedBy) {
         this.performedBy = performedBy;
+    }
+
+    public String getActorRole() {
+        return actorRole;
+    }
+
+    public void setActorRole(String actorRole) {
+        this.actorRole = actorRole;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
     }
 
     public Instant getPerformedDate() {

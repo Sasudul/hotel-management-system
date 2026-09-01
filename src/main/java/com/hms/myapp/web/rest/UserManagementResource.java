@@ -5,6 +5,8 @@ import com.hms.myapp.domain.User;
 import com.hms.myapp.repository.AuthorityRepository;
 import com.hms.myapp.repository.UserRepository;
 import com.hms.myapp.security.AuthoritiesConstants;
+import com.hms.myapp.service.AuditLogService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,10 +26,12 @@ public class UserManagementResource {
 
     private final UserRepository userRepository;
     private final AuthorityRepository authorityRepository;
+    private final AuditLogService auditLogService;
 
-    public UserManagementResource(UserRepository userRepository, AuthorityRepository authorityRepository) {
+    public UserManagementResource(UserRepository userRepository, AuthorityRepository authorityRepository, AuditLogService auditLogService) {
         this.userRepository = userRepository;
         this.authorityRepository = authorityRepository;
+        this.auditLogService = auditLogService;
     }
 
     /**
@@ -53,10 +57,14 @@ public class UserManagementResource {
     @Transactional
     public ResponseEntity<UserDTO> updateUserRoles(@PathVariable("login") String login, @RequestBody List<String> roles) {
         LOG.debug("REST request to update roles for user {}: {}", login, roles);
+        List<String> normalizedRoles = new ArrayList<>(roles);
+        if (!normalizedRoles.contains(AuthoritiesConstants.USER)) {
+            normalizedRoles.add(AuthoritiesConstants.USER);
+        }
         return userRepository
             .findOneWithAuthoritiesByLogin(login)
             .map(user -> {
-                Set<Authority> authorities = roles
+                Set<Authority> authorities = normalizedRoles
                     .stream()
                     .map(authorityRepository::findById)
                     .filter(java.util.Optional::isPresent)
@@ -64,12 +72,12 @@ public class UserManagementResource {
                     .collect(Collectors.toSet());
                 user.setAuthorities(authorities);
                 userRepository.save(user);
+                auditLogService.logAction("User", null, "UPDATE_ROLES", "Updated roles for " + user.getLogin() + " to " + normalizedRoles);
                 return ResponseEntity.ok(new UserDTO(user));
             })
             .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // A simple DTO class just for this resource to avoid altering standard UserDTO logic
     public static class UserDTO {
 
         private String id;

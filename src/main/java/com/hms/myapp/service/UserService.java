@@ -5,6 +5,7 @@ import com.hms.myapp.domain.Authority;
 import com.hms.myapp.domain.User;
 import com.hms.myapp.repository.AuthorityRepository;
 import com.hms.myapp.repository.UserRepository;
+import com.hms.myapp.security.AuthoritiesConstants;
 import com.hms.myapp.security.SecurityUtils;
 import com.hms.myapp.service.dto.AdminUserDTO;
 import com.hms.myapp.service.dto.UserDTO;
@@ -80,6 +81,41 @@ public class UserService {
         return userRepository.findOneWithAuthoritiesByLogin(login);
     }
 
+    public User findOrCreateGuestUser(String email, String fullName) {
+        String normalizedEmail = email == null ? null : email.trim().toLowerCase(Locale.ENGLISH);
+        if (normalizedEmail == null || normalizedEmail.isBlank()) {
+            throw new IllegalArgumentException("Guest email is required");
+        }
+        return userRepository
+            .findOneByEmailIgnoreCase(normalizedEmail)
+            .or(() -> userRepository.findOneByLogin(normalizedEmail))
+            .orElseGet(() -> createGuestUser(normalizedEmail, fullName));
+    }
+
+    private User createGuestUser(String email, String fullName) {
+        User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        user.setLogin(email);
+        user.setEmail(email);
+        user.setActivated(true);
+        user.setLangKey(Constants.DEFAULT_LANGUAGE);
+
+        String trimmedName = fullName == null ? "" : fullName.trim();
+        if (!trimmedName.isBlank()) {
+            String[] nameParts = trimmedName.split("\\s+", 2);
+            user.setFirstName(nameParts[0]);
+            if (nameParts.length > 1) {
+                user.setLastName(nameParts[1]);
+            }
+        }
+
+        Authority userAuthority = authorityRepository
+            .findById(AuthoritiesConstants.USER)
+            .orElseThrow(() -> new IllegalStateException("ROLE_USER authority is missing"));
+        user.setAuthorities(Set.of(userAuthority));
+        return userRepository.save(user);
+    }
+
     /**
      * Gets a list of all the authorities.
      * @return a list of all the authorities.
@@ -151,37 +187,37 @@ public class UserService {
             .getAuthorities()
             .stream()
             .map(GrantedAuthority::getAuthority)
-            .map(authority -> {
-                Authority auth = new Authority();
-                auth.setName(authority);
-                return auth;
-            })
+            .map(this::findOrCreateAuthority)
             .collect(Collectors.toSet());
 
-        // Ensure standard role is assigned if IdP didn't send roles
+        // Every signed-in account keeps the base guest role.
         if (
             authorities.isEmpty() ||
             authorities.stream().noneMatch(a -> a.getName().equals("ROLE_USER") || a.getName().equals("ROLE_ADMIN"))
         ) {
-            Authority userAuth = new Authority();
-            userAuth.setName("ROLE_USER");
-            authorities.add(userAuth);
+            authorities.add(findOrCreateAuthority(AuthoritiesConstants.USER));
         }
 
-        // Always grant Admin rights to the owner accounts and the @fcpl.biz domain
+        // Owner accounts keep administrator access after OAuth login.
         String email = user.getEmail() != null ? user.getEmail().toLowerCase() : "";
         if (email.equals("sasuduln@gmail.com") || email.equals("sasudulpubg@gmail.com") || email.endsWith("@fcpl.biz")) {
             boolean hasAdmin = authorities.stream().anyMatch(a -> a.getName().equals("ROLE_ADMIN"));
             if (!hasAdmin) {
-                Authority adminAuth = new Authority();
-                adminAuth.setName("ROLE_ADMIN");
-                authorities.add(adminAuth);
+                authorities.add(findOrCreateAuthority(AuthoritiesConstants.ADMIN));
             }
         }
 
         user.setAuthorities(authorities);
 
         return new AdminUserDTO(syncUserWithIdP(attributes, user));
+    }
+
+    private Authority findOrCreateAuthority(String authorityName) {
+        return authorityRepository.findById(authorityName).orElseGet(() -> {
+            Authority authority = new Authority();
+            authority.setName(authorityName);
+            return authorityRepository.save(authority);
+        });
     }
 
     private static User getUser(Map<String, Object> details) {
@@ -192,7 +228,7 @@ public class UserService {
         if (details.get("preferred_username") != null) {
             username = ((String) details.get("preferred_username")).toLowerCase();
         }
-        // handle resource server JWT, where sub claim is email and uid is ID
+        // Some JWT providers use uid as the stable user id.
         if (details.get("uid") != null) {
             user.setId((String) details.get("uid"));
             user.setLogin(sub);
@@ -220,7 +256,6 @@ public class UserService {
         if (details.get("email") != null) {
             user.setEmail(((String) details.get("email")).toLowerCase());
         } else if (sub.contains("|") && username != null && username.contains("@")) {
-            // special handling for Auth0
             user.setEmail(username);
         } else {
             user.setEmail(sub);
@@ -228,7 +263,6 @@ public class UserService {
         if (details.get("langKey") != null) {
             user.setLangKey((String) details.get("langKey"));
         } else if (details.get("locale") != null) {
-            // trim off country code if it exists
             String locale = (String) details.get("locale");
             if (locale.contains("_")) {
                 locale = locale.substring(0, locale.indexOf('_'));
@@ -237,7 +271,6 @@ public class UserService {
             }
             user.setLangKey(locale.toLowerCase());
         } else {
-            // set langKey to default if not specified by IdP
             user.setLangKey(Constants.DEFAULT_LANGUAGE);
         }
         if (details.get("picture") != null) {

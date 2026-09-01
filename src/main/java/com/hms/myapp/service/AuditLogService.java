@@ -4,6 +4,8 @@ import com.hms.myapp.domain.AuditLog;
 import com.hms.myapp.repository.AuditLogRepository;
 import com.hms.myapp.security.SecurityUtils;
 import java.time.Instant;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,13 +29,54 @@ public class AuditLogService {
      * @param action The action performed (e.g., "CREATE", "UPDATE", "DELETE")
      */
     public void logAction(String entityName, Long entityId, String action) {
-        // Get the currently logged-in user, default to 'system' if not found
+        logAction(entityName, entityId, action, null);
+    }
+
+    public void logAction(String entityName, Long entityId, String action, String details) {
         String user = SecurityUtils.getCurrentUserLogin().orElse("system");
+        AuditLog auditLog = new AuditLog(entityName, entityId, action, user, resolveActorRole(), details, Instant.now());
 
-        // Create a new audit log entry
-        AuditLog auditLog = new AuditLog(entityName, entityId, action, user, Instant.now());
-
-        // Save the audit log to the database
         auditLogRepository.save(auditLog);
+    }
+
+    public void logLogin(String login) {
+        logLogin(login, resolveActorRole());
+    }
+
+    public void logLogin(String login, String actorRole) {
+        AuditLog auditLog = new AuditLog("System", null, "LOGIN", login, actorRole, "Signed in to the hotel system", Instant.now());
+        auditLogRepository.save(auditLog);
+    }
+
+    private String resolveActorRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return "SYSTEM";
+        }
+        if (
+            authentication
+                .getAuthorities()
+                .stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"))
+        ) {
+            return "ADMIN";
+        }
+        if (
+            authentication
+                .getAuthorities()
+                .stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_RECEPTIONIST"))
+        ) {
+            return "STAFF";
+        }
+        if (
+            authentication
+                .getAuthorities()
+                .stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER"))
+        ) {
+            return "USER";
+        }
+        return "SYSTEM";
     }
 }

@@ -58,20 +58,26 @@ export const Audits = () => {
   };
 
   return (
-    <div>
-      <h2 id="audits-page-heading" data-cy="auditsPageHeading">
-        <FontAwesomeIcon icon={faHistory} /> Activity Logs
-      </h2>
-      <p className="text-muted">A complete history of actions performed by staff members on Bookings and Rooms.</p>
+    <div className="hms-admin-shell">
+      <div className="hms-admin-header">
+        <div>
+          <h2 id="audits-page-heading" data-cy="auditsPageHeading">
+            <FontAwesomeIcon icon={faHistory} className="me-2 text-primary" /> Audit Logs
+          </h2>
+          <p>A complete history of booking, room, payment, and staff authority changes.</p>
+        </div>
+      </div>
       <div className="table-responsive">
-        <Table striped responsive>
+        <Table responsive hover className="align-middle">
           <thead>
             <tr>
               <th>Date</th>
               <th>User</th>
+              <th>Authority</th>
               <th>Action</th>
               <th>Entity Type</th>
               <th>Entity ID</th>
+              <th>Details</th>
             </tr>
           </thead>
           <tbody>
@@ -79,11 +85,13 @@ export const Audits = () => {
               <tr key={`audit-${i}`}>
                 <td>{dayjs(audit.performedDate).format('YYYY-MM-DD HH:mm:ss')}</td>
                 <td>{audit.performedBy}</td>
+                <td>{audit.actorRole || 'SYSTEM'}</td>
                 <td>
                   <span className={getBadgeClass(audit.action)}>{audit.action}</span>
                 </td>
                 <td>{audit.entityName}</td>
-                <td>#{audit.entityId}</td>
+                <td>{audit.entityId ? `#${audit.entityId}` : '-'}</td>
+                <td>{audit.details || '-'}</td>
               </tr>
             ))}
           </tbody>

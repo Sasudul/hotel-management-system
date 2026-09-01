@@ -18,5 +18,6 @@ public interface GuestMapper extends EntityMapper<GuestDTO, Guest> {
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "id", source = "id")
     @Mapping(target = "login", source = "login")
+    @Mapping(target = "email", source = "email")
     UserDTO toDtoUserLogin(User user);
 }

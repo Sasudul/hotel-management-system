@@ -94,7 +94,9 @@ export const Home = () => {
   const [newBookingCheckIn, setNewBookingCheckIn] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [newBookingCheckOut, setNewBookingCheckOut] = useState<string>(dayjs().add(1, 'day').format('YYYY-MM-DD'));
   const [newBookingGuestName, setNewBookingGuestName] = useState<string>('');
+  const [newBookingGuestEmail, setNewBookingGuestEmail] = useState<string>('');
   const [newBookingGuestPhone, setNewBookingGuestPhone] = useState<string>('');
+  const [newBookingGuestIdDoc, setNewBookingGuestIdDoc] = useState<string>('');
   const [newBookingStatus, setNewBookingStatus] = useState<string>('CONFIRMED');
   const [newBookingTotalPrice, setNewBookingTotalPrice] = useState<number>(0);
 
@@ -235,24 +237,6 @@ export const Home = () => {
     setSubmittingBooking(true);
 
     try {
-      // 1. Create or Find Guest
-      let guestId = guests.length > 0 ? guests[0].id : null;
-
-      if (!guestId) {
-        try {
-          const guestRes = await axios.post<IGuest>('/api/guests', {
-            phone: guestPhone,
-            address: 'Main Street, City Center',
-            idDocumentNumber: guestIdDoc,
-            user: account,
-          });
-          guestId = guestRes.data.id || 1;
-        } catch {
-          guestId = 1;
-        }
-      }
-
-      // 2. Create Booking
       const bookingPayload = {
         checkInDate: dayjs(startDate).format('YYYY-MM-DD'),
         checkOutDate: dayjs(endDate).format('YYYY-MM-DD'),
@@ -260,7 +244,10 @@ export const Home = () => {
         numberOfGuests: guestCount,
         specialRequests: specialRequests || 'Pay at hotel booking',
         room: { id: selectedRoom.id },
-        guest: { id: guestId },
+        guestEmail: guestEmail || account.email || account.login,
+        guestName: guestName || `${account.firstName || ''} ${account.lastName || ''}`.trim() || account.login,
+        guestPhone,
+        guestIdDocumentNumber: guestIdDoc,
         totalAmount: calculateTotalPrice(selectedRoom.pricePerNight),
         createdDate: dayjs().toISOString(),
       };
@@ -304,27 +291,19 @@ export const Home = () => {
 
   const handleCreateStaffBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBookingRoomId || !newBookingCheckIn || !newBookingCheckOut || !newBookingGuestName || !newBookingTotalPrice) {
+    if (
+      !newBookingRoomId ||
+      !newBookingCheckIn ||
+      !newBookingCheckOut ||
+      !newBookingGuestName ||
+      !newBookingGuestEmail ||
+      !newBookingGuestPhone
+    ) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     try {
-      let guestId = guests.length > 0 ? guests[0].id : null;
-      if (!guestId) {
-        try {
-          const guestRes = await axios.post<IGuest>('/api/guests', {
-            phone: newBookingGuestPhone || 'N/A',
-            address: 'Unknown',
-            idDocumentNumber: 'N/A',
-            user: account,
-          });
-          guestId = guestRes.data.id || 1;
-        } catch {
-          guestId = 1;
-        }
-      }
-
       const bookingPayload = {
         checkInDate: newBookingCheckIn,
         checkOutDate: newBookingCheckOut,
@@ -332,7 +311,10 @@ export const Home = () => {
         numberOfGuests: 1,
         specialRequests: 'Manually added by staff for ' + newBookingGuestName,
         room: { id: Number(newBookingRoomId) },
-        guest: { id: guestId },
+        guestEmail: newBookingGuestEmail,
+        guestName: newBookingGuestName,
+        guestPhone: newBookingGuestPhone,
+        guestIdDocumentNumber: newBookingGuestIdDoc,
         totalAmount: newBookingTotalPrice,
         createdDate: dayjs().toISOString(),
       };
@@ -342,6 +324,9 @@ export const Home = () => {
       setShowAddBookingModal(false);
       setNewBookingRoomId('');
       setNewBookingGuestName('');
+      setNewBookingGuestEmail('');
+      setNewBookingGuestPhone('');
+      setNewBookingGuestIdDoc('');
       setNewBookingTotalPrice(0);
       if (isAuthenticated) fetchBookings();
     } catch (err: any) {
@@ -1094,8 +1079,31 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
+                  <Form.Label className="small fw-bold">Guest Gmail / Email</Form.Label>
+                  <Form.Control
+                    type="email"
+                    required
+                    placeholder="guest@gmail.com"
+                    value={newBookingGuestEmail}
+                    onChange={e => setNewBookingGuestEmail(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
                   <Form.Label className="small fw-bold">Guest Phone</Form.Label>
                   <Form.Control type="text" required value={newBookingGuestPhone} onChange={e => setNewBookingGuestPhone(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="small fw-bold">ID Card / Passport Number</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={newBookingGuestIdDoc}
+                    onChange={e => setNewBookingGuestIdDoc(e.target.value)}
+                    placeholder="Optional if profile is pending"
+                  />
                 </Form.Group>
               </Col>
               <Col md={6}>

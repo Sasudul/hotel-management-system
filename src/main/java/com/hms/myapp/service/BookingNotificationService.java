@@ -30,7 +30,9 @@ public class BookingNotificationService {
 
     @Async
     public void sendBookingConfirmation(Booking booking) {
-        if (booking.getGuest() == null || booking.getGuest().getId() == null) return;
+        if (booking.getGuest() == null || booking.getGuest().getId() == null) {
+            return;
+        }
 
         Guest guest = guestRepository.findOneWithEagerRelationships(booking.getGuest().getId()).orElse(null);
         if (guest == null || guest.getUser() == null || guest.getUser().getEmail() == null) {
@@ -40,17 +42,17 @@ public class BookingNotificationService {
 
         User user = guest.getUser();
         String to = user.getEmail();
-        String subject = "Booking Confirmation - HotelMS";
+        String subject = "Your Grand Hotel Sri Lanka booking is confirmed";
         String content = String.format(
             "<html><body>" +
                 "<h2>Hello %s,</h2>" +
-                "<p>Your booking (ID: %d) has been confirmed.</p>" +
+                "<p>Your booking <strong>#BK-%d</strong> has been confirmed.</p>" +
                 "<p>Check-in: %s</p>" +
                 "<p>Check-out: %s</p>" +
-                "<p>Total Amount: $%s</p>" +
-                "<br><p>Thank you for choosing us!</p>" +
+                "<p>Total Amount: LKR %s</p>" +
+                "<br><p>Thank you for choosing Grand Hotel Sri Lanka.</p>" +
                 "</body></html>",
-            user.getFirstName(),
+            user.getFirstName() == null ? user.getLogin() : user.getFirstName(),
             booking.getId(),
             booking.getCheckInDate(),
             booking.getCheckOutDate(),
@@ -62,7 +64,9 @@ public class BookingNotificationService {
 
     @Async
     public void sendBookingCancellation(Booking booking) {
-        if (booking.getGuest() == null || booking.getGuest().getId() == null) return;
+        if (booking.getGuest() == null || booking.getGuest().getId() == null) {
+            return;
+        }
 
         Guest guest = guestRepository.findOneWithEagerRelationships(booking.getGuest().getId()).orElse(null);
         if (guest == null || guest.getUser() == null || guest.getUser().getEmail() == null) {
@@ -80,7 +84,7 @@ public class BookingNotificationService {
                 "<p>Reason: %s</p>" +
                 "<br><p>We hope to see you again.</p>" +
                 "</body></html>",
-            user.getFirstName(),
+            user.getFirstName() == null ? user.getLogin() : user.getFirstName(),
             booking.getId(),
             booking.getCancelledReason()
         );
@@ -99,10 +103,9 @@ public class BookingNotificationService {
             message.setSubject(subject);
             message.setText(content, true);
 
-            // Log the email content for development purposes
             log.info(
                 "\n----------------------------------------------------\n" +
-                    "EMAIL WOULD BE SENT (No SMTP configured):\n" +
+                    "Booking notification email:\n" +
                     "To: {}\nSubject: {}\nContent:\n{}\n" +
                     "----------------------------------------------------",
                 to,

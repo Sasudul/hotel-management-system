@@ -41,8 +41,7 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomMapper.toEntity(roomDTO);
         room = roomRepository.save(room);
 
-        // Log the room creation
-        auditLogService.logAction("Room", room.getId(), "CREATE");
+        auditLogService.logAction("Room", room.getId(), "CREATE", buildRoomDetails(room));
 
         return roomMapper.toDto(room);
     }
@@ -53,8 +52,7 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomMapper.toEntity(roomDTO);
         room = roomRepository.save(room);
 
-        // Log the room update
-        auditLogService.logAction("Room", room.getId(), "UPDATE");
+        auditLogService.logAction("Room", room.getId(), "UPDATE", buildRoomDetails(room));
 
         return roomMapper.toDto(room);
     }
@@ -72,8 +70,7 @@ public class RoomServiceImpl implements RoomService {
             })
             .map(roomRepository::save)
             .map(room -> {
-                // Log the partial update
-                auditLogService.logAction("Room", room.getId(), "UPDATE");
+                auditLogService.logAction("Room", room.getId(), "UPDATE", buildRoomDetails(room));
                 return roomMapper.toDto(room);
             });
     }
@@ -97,8 +94,7 @@ public class RoomServiceImpl implements RoomService {
         LOG.debug("Request to delete Room : {}", id);
         roomRepository.deleteById(id);
 
-        // Log the room deletion
-        auditLogService.logAction("Room", id, "DELETE");
+        auditLogService.logAction("Room", id, "DELETE", "Room was removed");
     }
 
     @Override
@@ -114,5 +110,9 @@ public class RoomServiceImpl implements RoomService {
             .stream()
             .map(roomMapper::toDto)
             .collect(java.util.stream.Collectors.toList());
+    }
+
+    private String buildRoomDetails(Room room) {
+        return "Room " + room.getRoomNumber() + " is " + room.getStatus() + " at LKR " + room.getPricePerNight() + " per night";
     }
 }

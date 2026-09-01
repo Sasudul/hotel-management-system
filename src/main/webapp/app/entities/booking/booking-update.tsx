@@ -65,7 +65,7 @@ export const BookingUpdate = () => {
     const entity = {
       ...bookingEntity,
       ...values,
-      guest: guests.find(it => it.id.toString() === values.guest?.toString()),
+      guest: values.guestEmail ? undefined : guests.find(it => it.id.toString() === values.guest?.toString()),
       room: rooms.find(it => it.id.toString() === values.room?.toString()),
     };
 
@@ -90,135 +90,162 @@ export const BookingUpdate = () => {
         };
 
   return (
-    <div>
+    <div className="hms-edit-page">
       <Row className="justify-content-center">
-        <Col md="8">
-          <h2 id="hotelManagementSystemApp.booking.home.createOrEditLabel" data-cy="BookingCreateUpdateHeading">
-            Create or edit a Booking
-          </h2>
+        <Col xl="9" lg="10">
+          <div className="hms-form-title">
+            <div>
+              <span className="hms-eyebrow">Reservations</span>
+              <h2 id="hotelManagementSystemApp.booking.home.createOrEditLabel" data-cy="BookingCreateUpdateHeading">
+                {isNew ? 'Create Booking' : 'Edit Booking'}
+              </h2>
+            </div>
+            <span className="hms-title-pill">Email confirmation enabled</span>
+          </div>
         </Col>
       </Row>
       <Row className="justify-content-center">
-        <Col md="8">
+        <Col xl="9" lg="10">
           {loading ? (
             <p>Loading...</p>
           ) : (
-            <ValidatedForm defaultValues={defaultValues()} onSubmit={saveEntity}>
+            <ValidatedForm className="hms-entity-form" defaultValues={defaultValues()} onSubmit={saveEntity}>
               {!isNew && <ValidatedField name="id" required readOnly id="booking-id" label="ID" validate={{ required: true }} />}
-              <ValidatedField
-                label="Check In Date"
-                id="booking-checkInDate"
-                name="checkInDate"
-                data-cy="checkInDate"
-                type="date"
-                validate={{
-                  required: { value: true, message: 'This field is required.' },
-                }}
-              />
-              <ValidatedField
-                label="Check Out Date"
-                id="booking-checkOutDate"
-                name="checkOutDate"
-                data-cy="checkOutDate"
-                type="date"
-                validate={{
-                  required: { value: true, message: 'This field is required.' },
-                }}
-              />
-              <ValidatedField label="Status" id="booking-status" name="status" data-cy="status" type="select">
-                {bookingStatusValues.map(bookingStatus => (
-                  <option value={bookingStatus} key={bookingStatus}>
-                    {bookingStatus}
-                  </option>
-                ))}
-              </ValidatedField>
-              <ValidatedField
-                label="Total Amount"
-                id="booking-totalAmount"
-                name="totalAmount"
-                data-cy="totalAmount"
-                type="text"
-                validate={{
-                  required: { value: true, message: 'This field is required.' },
-                  min: { value: 0, message: 'This field should be at least 0.' },
-                  validate: v => isNumber(v) || 'This field should be a number.',
-                }}
-              />
-              <ValidatedField
-                label="Number Of Guests"
-                id="booking-numberOfGuests"
-                name="numberOfGuests"
-                data-cy="numberOfGuests"
-                type="text"
-                validate={{
-                  required: { value: true, message: 'This field is required.' },
-                  min: { value: 1, message: 'This field should be at least 1.' },
-                  validate: v => isNumber(v) || 'This field should be a number.',
-                }}
-              />
-              <ValidatedField
-                label="Special Requests"
-                id="booking-specialRequests"
-                name="specialRequests"
-                data-cy="specialRequests"
-                type="text"
-                validate={{
-                  maxLength: { value: 1000, message: 'This field cannot be longer than 1000 characters.' },
-                }}
-              />
-              <ValidatedField
-                label="Created Date"
-                id="booking-createdDate"
-                name="createdDate"
-                data-cy="createdDate"
-                type="datetime-local"
-                placeholder="YYYY-MM-DD HH:mm"
-                validate={{
-                  required: { value: true, message: 'This field is required.' },
-                }}
-              />
-              <ValidatedField
-                label="Cancelled Reason"
-                id="booking-cancelledReason"
-                name="cancelledReason"
-                data-cy="cancelledReason"
-                type="text"
-                validate={{
-                  maxLength: { value: 500, message: 'This field cannot be longer than 500 characters.' },
-                }}
-              />
-              <ValidatedField id="booking-guest" name="guest" data-cy="guest" label="Guest" type="select" required>
-                <option value="" key="0" />
-                {guests
-                  ? guests.map(otherEntity => (
+              <div className="hms-form-section">
+                <h3>Stay Details</h3>
+                <div className="hms-form-grid">
+                  <ValidatedField label="Room" id="booking-room" name="room" data-cy="room" type="select" required>
+                    <option value="" key="0">
+                      Choose a room
+                    </option>
+                    {rooms?.map(otherEntity => (
                       <option value={otherEntity.id} key={otherEntity.id}>
-                        {otherEntity.idDocumentNumber}
+                        Room {otherEntity.roomNumber}
                       </option>
-                    ))
-                  : null}
-              </ValidatedField>
-              <FormText>This field is required.</FormText>
-              <ValidatedField id="booking-room" name="room" data-cy="room" label="Room" type="select" required>
-                <option value="" key="0" />
-                {rooms
-                  ? rooms.map(otherEntity => (
+                    ))}
+                  </ValidatedField>
+                  <ValidatedField label="Status" id="booking-status" name="status" data-cy="status" type="select">
+                    {bookingStatusValues.map(bookingStatus => (
+                      <option value={bookingStatus} key={bookingStatus}>
+                        {bookingStatus}
+                      </option>
+                    ))}
+                  </ValidatedField>
+                  <ValidatedField
+                    label="Check-in Date"
+                    id="booking-checkInDate"
+                    name="checkInDate"
+                    data-cy="checkInDate"
+                    type="date"
+                    validate={{ required: { value: true, message: 'This field is required.' } }}
+                  />
+                  <ValidatedField
+                    label="Check-out Date"
+                    id="booking-checkOutDate"
+                    name="checkOutDate"
+                    data-cy="checkOutDate"
+                    type="date"
+                    validate={{ required: { value: true, message: 'This field is required.' } }}
+                  />
+                  <ValidatedField
+                    label="Guests"
+                    id="booking-numberOfGuests"
+                    name="numberOfGuests"
+                    data-cy="numberOfGuests"
+                    type="number"
+                    validate={{
+                      required: { value: true, message: 'This field is required.' },
+                      min: { value: 1, message: 'This field should be at least 1.' },
+                      validate: v => isNumber(v) || 'This field should be a number.',
+                    }}
+                  />
+                  <ValidatedField
+                    label="Total Amount (LKR)"
+                    id="booking-totalAmount"
+                    name="totalAmount"
+                    data-cy="totalAmount"
+                    type="number"
+                    validate={{
+                      required: { value: true, message: 'This field is required.' },
+                      min: { value: 0, message: 'This field should be at least 0.' },
+                      validate: v => isNumber(v) || 'This field should be a number.',
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="hms-form-section">
+                <h3>Guest Profile</h3>
+                <div className="hms-form-grid">
+                  <ValidatedField
+                    label="Guest Gmail / Email"
+                    id="booking-guestEmail"
+                    name="guestEmail"
+                    data-cy="guestEmail"
+                    type="email"
+                    placeholder="guest@gmail.com"
+                  />
+                  <ValidatedField label="Guest Name" id="booking-guestName" name="guestName" data-cy="guestName" type="text" />
+                  <ValidatedField label="Guest Phone" id="booking-guestPhone" name="guestPhone" data-cy="guestPhone" type="text" />
+                  <ValidatedField
+                    label="ID Card / Passport Number"
+                    id="booking-guestIdDocumentNumber"
+                    name="guestIdDocumentNumber"
+                    data-cy="guestIdDocumentNumber"
+                    type="text"
+                  />
+                  <ValidatedField id="booking-guest" name="guest" data-cy="guest" label="Existing Guest" type="select">
+                    <option value="" key="0">
+                      Select only when email is not used
+                    </option>
+                    {guests?.map(otherEntity => (
                       <option value={otherEntity.id} key={otherEntity.id}>
-                        {otherEntity.roomNumber}
+                        {otherEntity.user?.email || otherEntity.user?.login || otherEntity.idDocumentNumber}
                       </option>
-                    ))
-                  : null}
-              </ValidatedField>
-              <FormText>This field is required.</FormText>
-              <Button as={Link as any} id="cancel-save" data-cy="entityCreateCancelButton" to="/booking" replace variant="info">
-                <FontAwesomeIcon icon="arrow-left" />
-                &nbsp;
-                <span className="d-none d-md-inline">Back</span>
-              </Button>
-              &nbsp;
-              <Button variant="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
-                <FontAwesomeIcon icon="save" />
-                &nbsp; Save
-              </Button>
+                    ))}
+                  </ValidatedField>
+                  <FormText>Entering an email will find or create the guest account automatically.</FormText>
+                </div>
+              </div>
+              <div className="hms-form-section">
+                <h3>Notes</h3>
+                <ValidatedField
+                  label="Special Requests"
+                  id="booking-specialRequests"
+                  name="specialRequests"
+                  data-cy="specialRequests"
+                  type="textarea"
+                  validate={{ maxLength: { value: 1000, message: 'This field cannot be longer than 1000 characters.' } }}
+                />
+                <div className="hms-form-grid">
+                  <ValidatedField
+                    label="Created Date"
+                    id="booking-createdDate"
+                    name="createdDate"
+                    data-cy="createdDate"
+                    type="datetime-local"
+                    placeholder="YYYY-MM-DD HH:mm"
+                    validate={{ required: { value: true, message: 'This field is required.' } }}
+                  />
+                  <ValidatedField
+                    label="Cancelled Reason"
+                    id="booking-cancelledReason"
+                    name="cancelledReason"
+                    data-cy="cancelledReason"
+                    type="text"
+                    validate={{ maxLength: { value: 500, message: 'This field cannot be longer than 500 characters.' } }}
+                  />
+                </div>
+              </div>
+              <div className="hms-form-actions">
+                <Button as={Link as any} id="cancel-save" data-cy="entityCreateCancelButton" to="/booking" replace variant="info">
+                  <FontAwesomeIcon icon="arrow-left" />
+                  <span>Back</span>
+                </Button>
+                <Button variant="primary" id="save-entity" data-cy="entityCreateSaveButton" type="submit" disabled={updating}>
+                  <FontAwesomeIcon icon="save" />
+                  <span>{updating ? 'Saving...' : 'Save Booking'}</span>
+                </Button>
+              </div>
             </ValidatedForm>
           )}
         </Col>

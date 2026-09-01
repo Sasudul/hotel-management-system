@@ -21,6 +21,8 @@ public interface BookingMapper extends EntityMapper<BookingDTO, Booking> {
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "id", source = "id")
     @Mapping(target = "idDocumentNumber", source = "idDocumentNumber")
+    @Mapping(target = "phone", source = "phone")
+    @Mapping(target = "user", source = "user")
     GuestDTO toDtoGuestIdDocumentNumber(Guest guest);
 
     @Named("roomRoomNumber")

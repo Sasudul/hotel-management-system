@@ -56,7 +56,7 @@ public class Room implements Serializable {
     @Column(name = "amenities", length = 500)
     private String amenities;
 
-    // A simple single-line comment for production quality: Stores the URL of the room's image
+    // Stores the room photo shown on booking screens.
     @Size(max = 1000)
     @Column(name = "image_url", length = 1000)
     private String imageUrl;

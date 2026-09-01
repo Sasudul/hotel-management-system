@@ -16,6 +16,10 @@ export interface IBooking {
   cancelledReason?: string | null;
   guest?: IGuest;
   room?: IRoom;
+  guestEmail?: string;
+  guestName?: string;
+  guestPhone?: string;
+  guestIdDocumentNumber?: string;
 }
 
 export const defaultValue: Readonly<IBooking> = {};

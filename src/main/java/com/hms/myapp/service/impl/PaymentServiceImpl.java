@@ -2,6 +2,7 @@ package com.hms.myapp.service.impl;
 
 import com.hms.myapp.domain.Payment;
 import com.hms.myapp.repository.PaymentRepository;
+import com.hms.myapp.service.AuditLogService;
 import com.hms.myapp.service.PaymentService;
 import com.hms.myapp.service.dto.PaymentDTO;
 import com.hms.myapp.service.mapper.PaymentMapper;
@@ -26,9 +27,12 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentMapper paymentMapper;
 
-    public PaymentServiceImpl(PaymentRepository paymentRepository, PaymentMapper paymentMapper) {
+    private final AuditLogService auditLogService;
+
+    public PaymentServiceImpl(PaymentRepository paymentRepository, PaymentMapper paymentMapper, AuditLogService auditLogService) {
         this.paymentRepository = paymentRepository;
         this.paymentMapper = paymentMapper;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -36,6 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
         LOG.debug("Request to save Payment : {}", paymentDTO);
         Payment payment = paymentMapper.toEntity(paymentDTO);
         payment = paymentRepository.save(payment);
+        auditLogService.logAction("Payment", payment.getId(), "CREATE", buildPaymentDetails(payment));
         return paymentMapper.toDto(payment);
     }
 
@@ -44,6 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
         LOG.debug("Request to update Payment : {}", paymentDTO);
         Payment payment = paymentMapper.toEntity(paymentDTO);
         payment = paymentRepository.save(payment);
+        auditLogService.logAction("Payment", payment.getId(), "UPDATE", buildPaymentDetails(payment));
         return paymentMapper.toDto(payment);
     }
 
@@ -59,7 +65,10 @@ public class PaymentServiceImpl implements PaymentService {
                 return existingPayment;
             })
             .map(paymentRepository::save)
-            .map(paymentMapper::toDto);
+            .map(payment -> {
+                auditLogService.logAction("Payment", payment.getId(), "UPDATE", buildPaymentDetails(payment));
+                return paymentMapper.toDto(payment);
+            });
     }
 
     @Override
@@ -84,5 +93,11 @@ public class PaymentServiceImpl implements PaymentService {
     public void delete(Long id) {
         LOG.debug("Request to delete Payment : {}", id);
         paymentRepository.deleteById(id);
+        auditLogService.logAction("Payment", id, "DELETE", "Payment was removed");
+    }
+
+    private String buildPaymentDetails(Payment payment) {
+        Long bookingId = payment.getBooking() != null ? payment.getBooking().getId() : null;
+        return "Payment " + payment.getStatus() + " for booking #" + bookingId + " amount LKR " + payment.getAmount();
     }
 }

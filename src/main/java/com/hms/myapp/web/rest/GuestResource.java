@@ -6,6 +6,7 @@ import com.hms.myapp.security.SecurityUtils;
 import com.hms.myapp.service.GuestService;
 import com.hms.myapp.service.UserService;
 import com.hms.myapp.service.dto.GuestDTO;
+import com.hms.myapp.service.dto.UserDTO;
 import com.hms.myapp.web.rest.errors.BadRequestAlertException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -161,7 +162,15 @@ public class GuestResource {
             new BadRequestAlertException("Current user login not found", ENTITY_NAME, "notloggedin")
         );
         Optional<GuestDTO> guestDTO = guestService.findByUserLogin(userLogin);
-        return ResponseUtil.wrapOrNotFound(guestDTO);
+        if (guestDTO.isPresent()) {
+            return ResponseEntity.ok(guestDTO.orElseThrow());
+        }
+        User user = userService
+            .getUserWithAuthoritiesByLogin(userLogin)
+            .orElseThrow(() -> new BadRequestAlertException("User not found", ENTITY_NAME, "usernotfound"));
+        GuestDTO emptyProfile = new GuestDTO();
+        emptyProfile.setUser(new UserDTO(user));
+        return ResponseEntity.ok(emptyProfile);
     }
 
     /**
@@ -174,17 +183,17 @@ public class GuestResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect.
      */
     @PutMapping("/current")
-    public ResponseEntity<GuestDTO> updateCurrentGuest(@Valid @RequestBody GuestDTO guestDTO) throws URISyntaxException {
+    public ResponseEntity<GuestDTO> updateCurrentGuest(@RequestBody GuestDTO guestDTO) throws URISyntaxException {
         LOG.debug("REST request to update current Guest : {}", guestDTO);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
             new BadRequestAlertException("Current user login not found", ENTITY_NAME, "notloggedin")
         );
+        normalizeCurrentGuestProfile(guestDTO);
 
         GuestDTO existingGuest = guestService.findByUserLogin(userLogin).orElse(null);
         if (existingGuest == null) {
-            // Production quality comment: Create guest if not exists for the current user
             User user = userService.getUserWithAuthoritiesByLogin(userLogin).orElseThrow();
-            guestDTO.setUser(new com.hms.myapp.service.dto.UserDTO(user));
+            guestDTO.setUser(new UserDTO(user));
             guestDTO = guestService.save(guestDTO);
             return ResponseEntity.created(new URI("/api/guests/" + guestDTO.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, false, ENTITY_NAME, guestDTO.getId().toString()))
@@ -198,6 +207,15 @@ public class GuestResource {
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(applicationName, false, ENTITY_NAME, guestDTO.getId().toString()))
             .body(guestDTO);
+    }
+
+    private void normalizeCurrentGuestProfile(GuestDTO guestDTO) {
+        if (guestDTO.getPhone() == null || guestDTO.getPhone().isBlank()) {
+            guestDTO.setPhone("+94000000000");
+        }
+        if (guestDTO.getIdDocumentNumber() == null || guestDTO.getIdDocumentNumber().isBlank()) {
+            guestDTO.setIdDocumentNumber("PROFILE-PENDING");
+        }
     }
 
     /**
