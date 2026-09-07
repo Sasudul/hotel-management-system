@@ -40,7 +40,7 @@ public class AuditLogResource {
     @GetMapping("")
     public ResponseEntity<List<AuditLog>> getAllAuditLogs(@org.springdoc.core.annotations.ParameterObject Pageable pageable) {
         LOG.debug("REST request to get a page of Audit Logs");
-        Page<AuditLog> page = auditLogRepository.findAllByOrderByPerformedDateDesc(pageable);
+        Page<AuditLog> page = auditLogRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
@@ -53,8 +53,8 @@ public class AuditLogResource {
         LOG.debug("REST request to get a page of System Logs for role {}", actorRole);
         Page<AuditLog> page =
             actorRole == null || actorRole.isBlank()
-                ? auditLogRepository.findAllByEntityNameOrderByPerformedDateDesc("System", pageable)
-                : auditLogRepository.findAllByEntityNameAndActorRoleOrderByPerformedDateDesc("System", actorRole, pageable);
+                ? auditLogRepository.findAllByEntityName("System", pageable)
+                : auditLogRepository.findAllByEntityNameAndActorRole("System", actorRole, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }

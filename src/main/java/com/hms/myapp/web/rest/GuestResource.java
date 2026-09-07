@@ -161,15 +161,23 @@ public class GuestResource {
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
             new BadRequestAlertException("Current user login not found", ENTITY_NAME, "notloggedin")
         );
+        // Return existing profile if found
         Optional<GuestDTO> guestDTO = guestService.findByUserLogin(userLogin);
         if (guestDTO.isPresent()) {
             return ResponseEntity.ok(guestDTO.orElseThrow());
         }
+
+        // If not found, fetch the user and generate a pending profile template
         User user = userService
             .getUserWithAuthoritiesByLogin(userLogin)
             .orElseThrow(() -> new BadRequestAlertException("User not found", ENTITY_NAME, "usernotfound"));
+
         GuestDTO emptyProfile = new GuestDTO();
         emptyProfile.setUser(new UserDTO(user));
+        // Add placeholder data to prevent form validation errors
+        emptyProfile.setPhone("+94000000000");
+        emptyProfile.setIdDocumentNumber("PROFILE-PENDING");
+
         return ResponseEntity.ok(emptyProfile);
     }
 
@@ -188,12 +196,16 @@ public class GuestResource {
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() ->
             new BadRequestAlertException("Current user login not found", ENTITY_NAME, "notloggedin")
         );
+        // Set default profile values if empty before saving
         normalizeCurrentGuestProfile(guestDTO);
 
+        // Check if the guest already exists in our system
         GuestDTO existingGuest = guestService.findByUserLogin(userLogin).orElse(null);
         if (existingGuest == null) {
+            // Find the user account to link to the new guest profile
             User user = userService.getUserWithAuthoritiesByLogin(userLogin).orElseThrow();
             guestDTO.setUser(new UserDTO(user));
+            // Save the newly created guest profile
             guestDTO = guestService.save(guestDTO);
             return ResponseEntity.created(new URI("/api/guests/" + guestDTO.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, false, ENTITY_NAME, guestDTO.getId().toString()))

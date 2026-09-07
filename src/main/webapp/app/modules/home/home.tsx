@@ -33,13 +33,12 @@ import { useAppSelector } from 'app/config/store';
 import { getLoginUrl } from 'app/shared/util/url-utils';
 import { IRoom } from 'app/shared/model/room.model';
 import { IBooking } from 'app/shared/model/booking.model';
-import { IGuest } from 'app/shared/model/guest.model';
+
 import { RoomType } from 'app/shared/model/enumerations/room-type.model';
 import { BookingStatus } from 'app/shared/model/enumerations/booking-status.model';
 import { Authority } from 'app/shared/jhipster/constants';
 import { hasAnyAuthority } from 'app/shared/auth/private-route';
 
-// Production quality comment: Hardcoded room images removed for production.
 const DEFAULT_ROOM_IMAGE = 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80';
 
 export const Home = () => {
@@ -59,7 +58,6 @@ export const Home = () => {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [availableRoomIds, setAvailableRoomIds] = useState<Set<number>>(new Set());
   const [bookings, setBookings] = useState<IBooking[]>([]);
-  const [guests, setGuests] = useState<IGuest[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<'guest' | 'staff'>('guest');
 
@@ -109,7 +107,6 @@ export const Home = () => {
         setViewMode('guest');
         fetchBookings();
       }
-      fetchGuests();
     }
   }, [isAuthenticated]);
 
@@ -170,16 +167,6 @@ export const Home = () => {
     } catch (err) {
       console.error('Error fetching bookings:', err);
       setBookings([]);
-    }
-  };
-
-  const fetchGuests = async () => {
-    try {
-      const res = await axios.get<IGuest[]>('/api/guests');
-      setGuests(extractArray(res.data));
-    } catch (err) {
-      console.error('Error fetching guests:', err);
-      setGuests([]);
     }
   };
 
@@ -429,7 +416,7 @@ export const Home = () => {
                       selectsStart
                       startDate={startDate}
                       endDate={endDate}
-                      minDate={new Date()}
+                      minDate={dayjs().toDate()}
                       className="form-control border-0 p-0 shadow-none bg-transparent w-100 fw-bold"
                       wrapperClassName="w-100"
                       placeholderText="Select Check-in"
@@ -961,19 +948,26 @@ export const Home = () => {
       </Modal>
 
       {/* Staff Add Room Modal */}
-      <Modal show={showAddRoomModal} onHide={() => setShowAddRoomModal(false)} centered>
-        <Modal.Header closeButton className="bg-dark text-white">
-          <Modal.Title>
+      <Modal show={showAddRoomModal} onHide={() => setShowAddRoomModal(false)} contentClassName="border-0 shadow-lg" centered>
+        <div className="premium-modal-header d-flex justify-content-between align-items-center">
+          <h4 className="premium-modal-title">
             <FontAwesomeIcon icon={faPlus} className="me-2" /> Add New Room
-          </Modal.Title>
-        </Modal.Header>
+          </h4>
+          <button
+            type="button"
+            className="btn-close btn-close-white"
+            aria-label="Close"
+            onClick={() => setShowAddRoomModal(false)}
+          ></button>
+        </div>
         <Form onSubmit={handleCreateRoom}>
-          <Modal.Body>
+          <div className="premium-modal-body">
             <Row className="g-3">
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Room Number</Form.Label>
+                  <Form.Label className="premium-label">Room Number</Form.Label>
                   <Form.Control
+                    className="premium-input"
                     type="text"
                     placeholder="e.g. 501"
                     required
@@ -984,8 +978,8 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Room Category</Form.Label>
-                  <Form.Select value={newRoomType} onChange={e => setNewRoomType(e.target.value as any)}>
+                  <Form.Label className="premium-label">Room Category</Form.Label>
+                  <Form.Select className="premium-input" value={newRoomType} onChange={e => setNewRoomType(e.target.value as any)}>
                     <option value="SINGLE">SINGLE</option>
                     <option value="DOUBLE">DOUBLE</option>
                     <option value="TWIN">TWIN</option>
@@ -996,26 +990,39 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Price / Night ($)</Form.Label>
-                  <Form.Control type="number" required value={newRoomPrice} onChange={e => setNewRoomPrice(Number(e.target.value))} />
+                  <Form.Label className="premium-label">Price / Night ($)</Form.Label>
+                  <Form.Control
+                    className="premium-input"
+                    type="number"
+                    required
+                    value={newRoomPrice}
+                    onChange={e => setNewRoomPrice(Number(e.target.value))}
+                  />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Capacity (Persons)</Form.Label>
-                  <Form.Control type="number" required value={newRoomCapacity} onChange={e => setNewRoomCapacity(Number(e.target.value))} />
-                </Form.Group>
-              </Col>
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label className="small fw-bold">Description</Form.Label>
-                  <Form.Control type="text" value={newRoomDesc} onChange={e => setNewRoomDesc(e.target.value)} />
-                </Form.Group>
-              </Col>
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>Image URL</Form.Label>
+                  <Form.Label className="premium-label">Capacity (Persons)</Form.Label>
                   <Form.Control
+                    className="premium-input"
+                    type="number"
+                    required
+                    value={newRoomCapacity}
+                    onChange={e => setNewRoomCapacity(Number(e.target.value))}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label className="premium-label">Description</Form.Label>
+                  <Form.Control className="premium-input" type="text" value={newRoomDesc} onChange={e => setNewRoomDesc(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col md={12}>
+                <Form.Group>
+                  <Form.Label className="premium-label">Image URL</Form.Label>
+                  <Form.Control
+                    className="premium-input"
                     type="url"
                     placeholder="https://example.com/room-image.jpg"
                     value={newRoomImageUrl}
@@ -1024,32 +1031,49 @@ export const Home = () => {
                 </Form.Group>
               </Col>
             </Row>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowAddRoomModal(false)}>
+          </div>
+          <div className="premium-modal-footer d-flex justify-content-end gap-2">
+            <Button variant="light" className="px-4 fw-bold text-secondary" onClick={() => setShowAddRoomModal(false)}>
               Cancel
             </Button>
-            <Button variant="primary" type="submit">
+            <button className="premium-btn py-2 px-4" type="submit">
               Save Room
-            </Button>
-          </Modal.Footer>
+            </button>
+          </div>
         </Form>
       </Modal>
 
       {/* Staff Add Booking Modal */}
-      <Modal show={showAddBookingModal} onHide={() => setShowAddBookingModal(false)} centered>
-        <Modal.Header closeButton className="bg-dark text-white">
-          <Modal.Title>
+      <Modal
+        show={showAddBookingModal}
+        onHide={() => setShowAddBookingModal(false)}
+        size="lg"
+        contentClassName="border-0 shadow-lg"
+        centered
+      >
+        <div className="premium-modal-header d-flex justify-content-between align-items-center">
+          <h4 className="premium-modal-title">
             <FontAwesomeIcon icon={faPlus} className="me-2" /> Add New Booking
-          </Modal.Title>
-        </Modal.Header>
+          </h4>
+          <button
+            type="button"
+            className="btn-close btn-close-white"
+            aria-label="Close"
+            onClick={() => setShowAddBookingModal(false)}
+          ></button>
+        </div>
         <Form onSubmit={handleCreateStaffBooking}>
-          <Modal.Body>
+          <div className="premium-modal-body">
             <Row className="g-3">
               <Col md={12}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Select Room</Form.Label>
-                  <Form.Select required value={newBookingRoomId} onChange={e => setNewBookingRoomId(Number(e.target.value))}>
+                  <Form.Label className="premium-label">Select Room</Form.Label>
+                  <Form.Select
+                    className="premium-input"
+                    required
+                    value={newBookingRoomId}
+                    onChange={e => setNewBookingRoomId(Number(e.target.value))}
+                  >
                     <option value="">-- Choose a Room --</option>
                     {safeRoomsList.map(r => (
                       <option key={r.id} value={r.id}>
@@ -1061,26 +1085,45 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Check-in Date</Form.Label>
-                  <Form.Control type="date" required value={newBookingCheckIn} onChange={e => setNewBookingCheckIn(e.target.value)} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="small fw-bold">Check-out Date</Form.Label>
-                  <Form.Control type="date" required value={newBookingCheckOut} onChange={e => setNewBookingCheckOut(e.target.value)} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="small fw-bold">Guest Name</Form.Label>
-                  <Form.Control type="text" required value={newBookingGuestName} onChange={e => setNewBookingGuestName(e.target.value)} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="small fw-bold">Guest Gmail / Email</Form.Label>
+                  <Form.Label className="premium-label">Check-in Date</Form.Label>
                   <Form.Control
+                    className="premium-input"
+                    type="date"
+                    required
+                    value={newBookingCheckIn}
+                    onChange={e => setNewBookingCheckIn(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="premium-label">Check-out Date</Form.Label>
+                  <Form.Control
+                    className="premium-input"
+                    type="date"
+                    required
+                    value={newBookingCheckOut}
+                    onChange={e => setNewBookingCheckOut(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="premium-label">Guest Name</Form.Label>
+                  <Form.Control
+                    className="premium-input"
+                    type="text"
+                    required
+                    value={newBookingGuestName}
+                    onChange={e => setNewBookingGuestName(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="premium-label">Guest Gmail / Email</Form.Label>
+                  <Form.Control
+                    className="premium-input"
                     type="email"
                     required
                     placeholder="guest@gmail.com"
@@ -1091,14 +1134,21 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Guest Phone</Form.Label>
-                  <Form.Control type="text" required value={newBookingGuestPhone} onChange={e => setNewBookingGuestPhone(e.target.value)} />
+                  <Form.Label className="premium-label">Guest Phone</Form.Label>
+                  <Form.Control
+                    className="premium-input"
+                    type="text"
+                    required
+                    value={newBookingGuestPhone}
+                    onChange={e => setNewBookingGuestPhone(e.target.value)}
+                  />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">ID Card / Passport Number</Form.Label>
+                  <Form.Label className="premium-label">ID Card / Passport Number</Form.Label>
                   <Form.Control
+                    className="premium-input"
                     type="text"
                     value={newBookingGuestIdDoc}
                     onChange={e => setNewBookingGuestIdDoc(e.target.value)}
@@ -1108,8 +1158,9 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Total Price (LKR)</Form.Label>
+                  <Form.Label className="premium-label">Total Price (LKR)</Form.Label>
                   <Form.Control
+                    className="premium-input"
                     type="number"
                     required
                     value={newBookingTotalPrice}
@@ -1119,8 +1170,8 @@ export const Home = () => {
               </Col>
               <Col md={6}>
                 <Form.Group>
-                  <Form.Label className="small fw-bold">Status</Form.Label>
-                  <Form.Select value={newBookingStatus} onChange={e => setNewBookingStatus(e.target.value)}>
+                  <Form.Label className="premium-label">Status</Form.Label>
+                  <Form.Select className="premium-input" value={newBookingStatus} onChange={e => setNewBookingStatus(e.target.value)}>
                     <option value="CONFIRMED">CONFIRMED</option>
                     <option value="PENDING">PENDING</option>
                     <option value="CANCELLED">CANCELLED</option>
@@ -1128,15 +1179,15 @@ export const Home = () => {
                 </Form.Group>
               </Col>
             </Row>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowAddBookingModal(false)}>
+          </div>
+          <div className="premium-modal-footer d-flex justify-content-end gap-2">
+            <Button variant="light" className="px-4 fw-bold text-secondary" onClick={() => setShowAddBookingModal(false)}>
               Cancel
             </Button>
-            <Button variant="primary" type="submit">
+            <button className="premium-btn py-2 px-4" type="submit">
               Save Booking
-            </Button>
-          </Modal.Footer>
+            </button>
+          </div>
         </Form>
       </Modal>
       {/* Authentication Requirement Modal */}

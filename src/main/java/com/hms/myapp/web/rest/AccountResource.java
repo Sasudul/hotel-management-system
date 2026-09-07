@@ -6,11 +6,17 @@ import com.hms.myapp.service.dto.AdminUserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.Serial;
 import java.security.Principal;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,6 +60,23 @@ public class AccountResource {
     public AdminUserDTO getAccount(Principal principal, HttpServletRequest request) {
         if (principal instanceof AbstractAuthenticationToken authToken) {
             AdminUserDTO account = userService.getUserFromAuthentication(authToken);
+
+            // Sync the updated authorities (like ROLE_ADMIN) into the current security context
+            Collection<GrantedAuthority> newAuthorities = account
+                .getAuthorities()
+                .stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+            if (authToken instanceof OAuth2AuthenticationToken oauthToken) {
+                OAuth2AuthenticationToken newToken = new OAuth2AuthenticationToken(
+                    oauthToken.getPrincipal(),
+                    newAuthorities,
+                    oauthToken.getAuthorizedClientRegistrationId()
+                );
+                SecurityContextHolder.getContext().setAuthentication(newToken);
+            }
+
             if (request.getSession().getAttribute("loginAuditRecorded") == null) {
                 auditLogService.logLogin(account.getLogin(), resolveActorRole(account));
                 request.getSession().setAttribute("loginAuditRecorded", Boolean.TRUE);

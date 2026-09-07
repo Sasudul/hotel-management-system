@@ -75,14 +75,21 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDTO save(BookingDTO bookingDTO) {
         LOG.debug("Request to save Booking : {}", bookingDTO);
+        // Link the guest profile to this booking (creates one if it doesn't exist)
         resolveGuestForBooking(bookingDTO);
+
+        // Ensure the room is actually available for the selected dates
         bookingValidationService.validateNoOverlap(
             bookingDTO.getRoom().getId(),
             bookingDTO.getCheckInDate(),
             bookingDTO.getCheckOutDate(),
             null
         );
+
+        // Check if the initial booking status is valid
         bookingValidationService.assertValidTransition(null, bookingDTO.getStatus());
+
+        // Calculate the total price based on room rate and number of nights
         calculateTotalAmount(bookingDTO);
 
         if (bookingDTO.getCreatedDate() == null) {
@@ -92,9 +99,8 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingMapper.toEntity(bookingDTO);
         booking = bookingRepository.save(booking);
 
-        if (booking.getStatus() == com.hms.myapp.domain.enumeration.BookingStatus.CONFIRMED) {
-            bookingNotificationService.sendBookingConfirmation(booking);
-        }
+        // Always send booking confirmation/receipt email upon creation
+        bookingNotificationService.sendBookingConfirmation(booking);
 
         auditLogService.logAction("Booking", booking.getId(), "CREATE", buildBookingDetails(booking));
 
@@ -185,6 +191,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void resolveGuestForBooking(BookingDTO bookingDTO) {
+        // If an email is provided, find the user or register them automatically
         if (bookingDTO.getGuestEmail() != null && !bookingDTO.getGuestEmail().isBlank()) {
             User user = userService.findOrCreateGuestUser(bookingDTO.getGuestEmail(), bookingDTO.getGuestName());
             Guest guest = guestRepository.findOneByUserId(user.getId()).orElseGet(() -> createGuestForUser(bookingDTO, user));
@@ -192,6 +199,8 @@ public class BookingServiceImpl implements BookingService {
             bookingDTO.setGuest(guestMapper.toDto(guest));
             return;
         }
+
+        // Throw an error if we can't identify who is booking
         if (bookingDTO.getGuest() == null || bookingDTO.getGuest().getId() == null) {
             throw new BadRequestAlertException("Guest email or guest profile is required", "booking", "guestrequired");
         }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, FormGroup, FormLabel, FormControl, Container, Row, Col } from 'react-bootstrap';
+import { Form, FormGroup, FormLabel, FormControl, Container, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -27,7 +27,8 @@ export const Profile = () => {
           idDocumentNumber: response.data.idDocumentNumber || '',
         });
       }
-    } catch (error: any) {
+    } catch (err: any) {
+      console.error(err);
       toast.error('Failed to load profile details.');
     } finally {
       setLoading(false);
@@ -51,23 +52,24 @@ export const Profile = () => {
   };
 
   return (
-    <Container className="hms-edit-page pt-4">
+    <Container className="pt-5 pb-5">
       <Row className="justify-content-center">
         <Col xl="8" lg="9">
-          <div className="hms-form-title">
-            <div>
-              <span className="hms-eyebrow">Guest Account</span>
-              <h2 className="mb-0">My Profile</h2>
-            </div>
-            <span className="hms-title-pill">Production-ready guest record</span>
-          </div>
-          <Form className="hms-entity-form" onSubmit={handleSave}>
-            <div className="hms-form-section">
-              <h3>Contact Details</h3>
-              <div className="hms-form-grid">
+          <div className="premium-card">
+            <h2 className="premium-title">My Profile</h2>
+            <p className="premium-subtitle">Manage your personal information and contact details.</p>
+
+            <Form onSubmit={handleSave}>
+              <h4 className="mb-4 fw-bold" style={{ color: '#00224F' }}>
+                Contact Details
+              </h4>
+              <div className="premium-grid mb-4">
                 <FormGroup>
-                  <FormLabel htmlFor="phone">Phone Number</FormLabel>
+                  <FormLabel className="premium-label" htmlFor="phone">
+                    Phone Number
+                  </FormLabel>
                   <FormControl
+                    className="premium-input"
                     type="text"
                     name="phone"
                     id="phone"
@@ -78,8 +80,11 @@ export const Profile = () => {
                   />
                 </FormGroup>
                 <FormGroup>
-                  <FormLabel htmlFor="idDocumentNumber">ID Card / Passport Number</FormLabel>
+                  <FormLabel className="premium-label" htmlFor="idDocumentNumber">
+                    ID Card / Passport Number
+                  </FormLabel>
                   <FormControl
+                    className="premium-input"
                     type="text"
                     name="idDocumentNumber"
                     id="idDocumentNumber"
@@ -90,12 +95,16 @@ export const Profile = () => {
                   />
                 </FormGroup>
               </div>
-            </div>
-            <div className="hms-form-section">
-              <h3>Address</h3>
-              <FormGroup>
-                <FormLabel htmlFor="address">Address</FormLabel>
+
+              <h4 className="mb-4 fw-bold" style={{ color: '#00224F' }}>
+                Address
+              </h4>
+              <FormGroup className="mb-5">
+                <FormLabel className="premium-label" htmlFor="address">
+                  Full Address
+                </FormLabel>
                 <FormControl
+                  className="premium-input"
                   as="textarea"
                   rows={4}
                   name="address"
@@ -106,14 +115,15 @@ export const Profile = () => {
                   disabled={loading}
                 />
               </FormGroup>
-            </div>
-            <div className="hms-form-actions">
-              <Button variant="primary" type="submit" disabled={loading}>
-                <FontAwesomeIcon icon="save" />
-                <span>{loading ? 'Loading...' : 'Save Profile'}</span>
-              </Button>
-            </div>
-          </Form>
+
+              <div className="d-flex justify-content-end mt-4">
+                <button className="premium-btn" type="submit" disabled={loading}>
+                  <FontAwesomeIcon icon="save" />
+                  <span>{loading ? 'Saving...' : 'Save Profile'}</span>
+                </button>
+              </div>
+            </Form>
+          </div>
         </Col>
       </Row>
     </Container>
